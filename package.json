@@ -4,15 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p \"./src\" -w",
+    "test": "node ./tests/tests.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "domhandler": "^2.3.0",
-    "htmlparser2": "^3.9.2"
+    "@types/jsdom": "^2.0.30",
+    "@types/node": "^7.0.12",
+    "async-file": "^2.0.2",
+    "fs": "0.0.1-security"
   },
   "devDependencies": {
-    "@types/htmlparser2": "^3.7.29"
+    "typescript": "^2.2.2"
   }
 }

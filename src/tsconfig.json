@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
-    "allowJs": true
+    // "allowJs": true,
+    "module": "commonjs",
+    "types": ["node", "async-file"],
+    "pretty": true,
+    "lib": ["es2015", "dom"],
+    "outDir": "../dist"
   }
 }
