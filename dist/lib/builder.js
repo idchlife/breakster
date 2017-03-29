@@ -47,6 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var fs = require("async-file");
 var jsdom = require("jsdom");
+var component_1 = require("./parts/component");
 var BuilderError = (function (_super) {
     __extends(BuilderError, _super);
     function BuilderError(message) {
@@ -54,6 +55,8 @@ var BuilderError = (function (_super) {
     }
     return BuilderError;
 }(Error));
+var TYPE_LAYOUT = "layout";
+var TYPE_LAYOUT_CONTENT = "layout-content";
 var Builder = (function () {
     function Builder(inputFile, outputFolder) {
         this.tag = "comp";
@@ -65,7 +68,8 @@ var Builder = (function () {
     }
     Builder.prototype.build = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var fileContents, window, document, componentElements, Components;
+            var _this = this;
+            var fileContents, window, document, componentElements, components;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.checkPrerequisites()];
@@ -96,11 +100,57 @@ var Builder = (function () {
                             console.info("Could not find any tags for components in file " + this.inputFile + ". Did you provide wrong file?");
                             return [2 /*return*/];
                         }
-                        Components = [];
+                        components = [];
+                        componentElements.forEach(function (el) {
+                            var name = el.getAttribute("name");
+                            // Custom layout content handling
+                            if ([TYPE_LAYOUT, TYPE_LAYOUT_CONTENT].find(function (t) { return t === el.getAttribute("type"); })) {
+                                return;
+                            }
+                            _this.validateComponentElement(el);
+                            // TODO: provide component with attributes for further extending component
+                            var component = new component_1["default"](name);
+                            var contentElement = el.cloneNode(true);
+                            // Finding components used inside this component
+                            var innerComponentElements = Array.from(contentElement.querySelectorAll(_this.tag));
+                            /**
+                             * For replacing component elements with JSX Components.
+                             * Like <comp name="Component"></comp> to <Component />
+                             */
+                            var replacements = [];
+                            if (innerComponentElements.length) {
+                                innerComponentElements.forEach(function (innerEl) {
+                                    _this.validateComponentElement(innerEl);
+                                    var name = innerEl.getAttribute("name");
+                                    component.addExternalComponentName(name);
+                                    // Creating random name so we could change it in string further
+                                    var customReplacementName = "repl-" + (Math.random() * 100000);
+                                    replacements.push({
+                                        element: "<" + customReplacementName + "></" + customReplacementName + ">",
+                                        component: "<" + name + " />"
+                                    });
+                                    var componentNode = document.createElement(customReplacementName);
+                                    innerEl.parentElement.replaceChild(componentNode, innerEl);
+                                }, _this);
+                            }
+                            var content = contentElement.innerHTML;
+                            replacements.forEach(function (r) {
+                                console.log("Replacing " + r.element + " to " + r.component + " in " + content);
+                                content = content.replace(r.element, r.component);
+                            });
+                            component.setContent(content);
+                            components.push(component);
+                            console.log(component.generateCode());
+                        }, this);
                         return [2 /*return*/];
                 }
             });
         });
+    };
+    Builder.prototype.validateComponentElement = function (element) {
+        if (!element.getAttribute("name")) {
+            throw new BuilderError("In one of your component tags you did not specify 'name' attribute. It is required.");
+        }
     };
     Builder.prototype.checkPrerequisites = function () {
         return __awaiter(this, void 0, void 0, function () {
