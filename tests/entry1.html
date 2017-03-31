@@ -3,22 +3,25 @@
     <title></title>
   </head>
   <body>
-    <comp type="layout" name="Layout">
-      <header>
-        <div>User</div>
-        <comp name="UserInfo">
-          <div class="user-info-class">Username: Alan</div>
-        </comp>
-      </header>
-      <comp type="layout-content">
-        <comp name="Product">
-          <div>Product name</div>
-          <div>Product price</div>
-          <div>Product count</div>
-          <comp name="BuyButton">
-            <button>buy</button>
+    <comp name="IndexPage">
+      <comp type="layout" name="Layout">
+        <header>
+          <div>User</div>
+          <comp name="UserInfo">
+            <div class="user-info-class">Username: Alan</div>
+          </comp>
+        </header>
+        <comp type="layout-content">
+          <comp name="Product">
+            <div>Product name</div>
+            <div>Product price</div>
+            <div>Product count</div>
+            <comp name="BuyButton">
+              <button>buy</button>
+            </comp>
           </comp>
         </comp>
+        <comp name="EmptyComponent"></comp>
       </comp>
     </comp>
   </body>

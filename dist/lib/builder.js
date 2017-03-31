@@ -105,7 +105,7 @@ var Builder = (function () {
                             try {
                                 var name_1 = el.getAttribute("name");
                                 // Custom layout content handling
-                                if ([exports.TYPE_LAYOUT, exports.TYPE_LAYOUT_CONTENT].find(function (t) { return t === el.getAttribute("type"); })) {
+                                if (exports.TYPE_LAYOUT_CONTENT === el.getAttribute("type")) {
                                     return;
                                 }
                                 _this.validateComponentElement(el);

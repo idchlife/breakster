@@ -69,7 +69,7 @@ class Builder {
         const name: string = el.getAttribute("name");
 
         // Custom layout content handling
-        if ([TYPE_LAYOUT, TYPE_LAYOUT_CONTENT].find(t => t === el.getAttribute("type"))) {
+        if (TYPE_LAYOUT_CONTENT === el.getAttribute("type")) {
           return;
         }
 
