@@ -55,8 +55,8 @@ var BuilderError = (function (_super) {
     }
     return BuilderError;
 }(Error));
-var TYPE_LAYOUT = "layout";
-var TYPE_LAYOUT_CONTENT = "layout-content";
+exports.TYPE_LAYOUT = "layout";
+exports.TYPE_LAYOUT_CONTENT = "layout-content";
 var Builder = (function () {
     function Builder(inputFile, outputFolder) {
         this.tag = "comp";
@@ -102,45 +102,23 @@ var Builder = (function () {
                         }
                         components = [];
                         componentElements.forEach(function (el) {
-                            var name = el.getAttribute("name");
-                            // Custom layout content handling
-                            if ([TYPE_LAYOUT, TYPE_LAYOUT_CONTENT].find(function (t) { return t === el.getAttribute("type"); })) {
-                                return;
+                            try {
+                                var name_1 = el.getAttribute("name");
+                                // Custom layout content handling
+                                if ([exports.TYPE_LAYOUT, exports.TYPE_LAYOUT_CONTENT].find(function (t) { return t === el.getAttribute("type"); })) {
+                                    return;
+                                }
+                                _this.validateComponentElement(el);
+                                // TODO: provide component with attributes for further extending component
+                                var component = new component_1["default"](name_1);
+                                component.processHTMLElement(el, _this.tag, document);
+                                components.push(component);
+                                console.log(component.generateCode());
                             }
-                            _this.validateComponentElement(el);
-                            // TODO: provide component with attributes for further extending component
-                            var component = new component_1["default"](name);
-                            var contentElement = el.cloneNode(true);
-                            // Finding components used inside this component
-                            var innerComponentElements = Array.from(contentElement.querySelectorAll(_this.tag));
-                            /**
-                             * For replacing component elements with JSX Components.
-                             * Like <comp name="Component"></comp> to <Component />
-                             */
-                            var replacements = [];
-                            if (innerComponentElements.length) {
-                                innerComponentElements.forEach(function (innerEl) {
-                                    _this.validateComponentElement(innerEl);
-                                    var name = innerEl.getAttribute("name");
-                                    component.addExternalComponentName(name);
-                                    // Creating random name so we could change it in string further
-                                    var customReplacementName = "repl-" + (Math.random() * 100000);
-                                    replacements.push({
-                                        element: "<" + customReplacementName + "></" + customReplacementName + ">",
-                                        component: "<" + name + " />"
-                                    });
-                                    var componentNode = document.createElement(customReplacementName);
-                                    innerEl.parentElement.replaceChild(componentNode, innerEl);
-                                }, _this);
+                            catch (e) {
+                                console.error(e.stack);
+                                throw new BuilderError("Something gone wrong in the building process. Loggin error info before this error.");
                             }
-                            var content = contentElement.innerHTML;
-                            replacements.forEach(function (r) {
-                                console.log("Replacing " + r.element + " to " + r.component + " in " + content);
-                                content = content.replace(r.element, r.component);
-                            });
-                            component.setContent(content);
-                            components.push(component);
-                            console.log(component.generateCode());
                         }, this);
                         return [2 /*return*/];
                 }

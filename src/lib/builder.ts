@@ -8,8 +8,8 @@ class BuilderError extends Error {
   }
 }
 
-const TYPE_LAYOUT = "layout";
-const TYPE_LAYOUT_CONTENT = "layout-content";
+export const TYPE_LAYOUT = "layout";
+export const TYPE_LAYOUT_CONTENT = "layout-content";
 
 interface ComponentPreparations {
   [componentName: string]: string;
@@ -65,63 +65,31 @@ class Builder {
     const components: Array<Component> = [];
 
     componentElements.forEach((el: HTMLElement) => {
-      const name: string = el.getAttribute("name");
+      try {
+        const name: string = el.getAttribute("name");
 
-      // Custom layout content handling
-      if ([TYPE_LAYOUT, TYPE_LAYOUT_CONTENT].find(t => t === el.getAttribute("type"))) {
-        return;
+        // Custom layout content handling
+        if ([TYPE_LAYOUT, TYPE_LAYOUT_CONTENT].find(t => t === el.getAttribute("type"))) {
+          return;
+        }
+
+        this.validateComponentElement(el);
+
+        // TODO: provide component with attributes for further extending component
+        const component = new Component(name);
+
+        component.processHTMLElement(el, this.tag, document);
+
+        components.push(component);
+
+        console.log(component.generateCode());
+      } catch (e) {
+        console.error(e.stack);
+
+        throw new BuilderError(
+          `Something gone wrong in the building process. Loggin error info before this error.`
+        );
       }
-
-      this.validateComponentElement(el);
-
-      // TODO: provide component with attributes for further extending component
-      const component = new Component(name);
-
-      const contentElement = el.cloneNode(true) as HTMLElement;
-
-      // Finding components used inside this component
-      const innerComponentElements = Array.from(contentElement.querySelectorAll(this.tag));
-
-      /**
-       * For replacing component elements with JSX Components.
-       * Like <comp name="Component"></comp> to <Component />
-       */
-      const replacements: Array<{element: string, component: string}> = [];
-
-      if (innerComponentElements.length) {
-        innerComponentElements.forEach((innerEl: HTMLElement) => {
-          this.validateComponentElement(innerEl);
-
-          const name = innerEl.getAttribute("name");
-
-          component.addExternalComponentName(name);
-
-          // Creating random name so we could change it in string further
-          const customReplacementName: string = "repl-" + (Math.random() * 100000);
-
-          replacements.push({
-            element: `<${customReplacementName}></${customReplacementName}>`,
-            component: `<${name} />`
-          });
-
-          const componentNode = document.createElement(customReplacementName);
-
-          innerEl.parentElement.replaceChild(componentNode, innerEl);
-        }, this);
-      }
-
-      let content: string = contentElement.innerHTML;
-
-      replacements.forEach(r => {
-        console.log(`Replacing ${r.element} to ${r.component} in ${content}`);
-        content = content.replace(r.element, r.component);
-      });
-
-      component.setContent(content);
-
-      components.push(component);
-
-      console.log(component.generateCode());
     }, this);
   }
 
