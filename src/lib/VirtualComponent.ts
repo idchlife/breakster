@@ -1,4 +1,5 @@
 import { CodeGeneratorInterface } from "./CodeGenerator";
+import ReactyCodeGenerator from "./ReactyCodeGenerator";
 
 class VirtualComponentParsingError extends Error {}
 class VirtualComponentInvalidElementError extends Error {};
@@ -8,6 +9,8 @@ class VirtualComponentInitializationError extends Error {};
 const ATTR_NAME = "j-name";
 export const ATTR_ID = "j-id";
 export const DEFAULT_COMPONENT_ATTR_NAME = "j-comp";
+export const ATTR_DIALECT = "j-dialect";
+export const ATTR_JSX_LIB = "j-jsx-lib";
 
 export interface VirtualComponentInterface {
   // For getting element, it's attributes, children, etc
@@ -19,6 +22,7 @@ export interface VirtualComponentInterface {
   // children from parent (if there is one)
   getId(): string;
   getChildren(): VirtualComponentInterface[];
+  generateCode(): string;
 }
 
 export default class VirtualComponent implements VirtualComponentInterface {
@@ -37,10 +41,20 @@ export default class VirtualComponent implements VirtualComponentInterface {
 
   private codeGenerator: CodeGeneratorInterface; 
 
-  constructor(el: HTMLElement, componentAttr: string) {
+  constructor(
+    el: HTMLElement,
+    componentAttr: string,
+    codeGenerator: CodeGeneratorInterface = new ReactyCodeGenerator()
+  ) {
     if (!componentAttr) {
       throw new VirtualComponentInitializationError(
         "Required argument componentAttr was not provided."
+      );
+    }
+
+    if (!codeGenerator) {
+      throw new VirtualComponentInitializationError(
+        "Required argument codeGenerator was not provided."
       );
     }
 
@@ -48,6 +62,8 @@ export default class VirtualComponent implements VirtualComponentInterface {
     this.el = el;
     this.name = el.getAttribute(ATTR_NAME);
     this.componentAttr = componentAttr;
+    this.codeGenerator = codeGenerator;
+    this.codeGenerator.attachComponent(this);
 
     this.parseRootHTMLElement();
   }
@@ -84,12 +100,14 @@ export default class VirtualComponent implements VirtualComponentInterface {
     return this.id;
   }
 
+  public generateCode(): string {
+    return this.codeGenerator.generate();
+  }
+
   public getAllChildComponentsAndItself(): VirtualComponent[] {
-    const arr: VirtualComponent[] = [this];
+    let arr: VirtualComponent[] = [this];
 
-    console.log(`Getting children from ${this.getName()}`);
-
-    this.children.forEach(c => arr.concat(c.getAllChildComponentsAndItself()));
+    this.children.forEach(c => arr = arr.concat(c.getAllChildComponentsAndItself()));
 
     return arr;
   }
@@ -127,8 +145,15 @@ Html of this element (without children): ${(el.cloneNode() as HTMLElement).outer
 
         // Filling with elements. Also filtered above by nodeType === 1 so
         // we will be working only with element nodes, not text/comment etc
-        arr.forEach(function parseChildNode(el) {          
-          // Finding first occurence of element
+        arr.forEach(function parseChildNode(el) {        
+          // If child itself is component root
+          if (el.getAttribute(ATTR_NAME)) {
+            discoveredComponentRoots.push(el);
+
+            return;
+          }
+
+          // Finding first occurence of element in children of this child
           const foundElement = el.querySelector(`[${this.componentAttr}]`) as HTMLElement;
 
           if (foundElement) {
@@ -146,7 +171,8 @@ Html of this element (without children): ${(el.cloneNode() as HTMLElement).outer
         this.children.push(
           new VirtualComponent(
             el.cloneNode(true) as HTMLElement,
-            this.componentAttr
+            this.componentAttr,
+            new ReactyCodeGenerator()
           ).setId(id)
         );
       }, this);

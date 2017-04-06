@@ -1,5 +1,10 @@
 import { CodeGeneratorInterface } from "./CodeGenerator";
-import { VirtualComponentInterface, ATTR_ID } from "./VirtualComponent";
+import {
+  VirtualComponentInterface,
+  ATTR_ID,
+  ATTR_DIALECT,
+  ATTR_JSX_LIB
+} from "./VirtualComponent";
 
 interface ReactyLibraryInterface {
   getFactoryFunctionName(): string;
@@ -26,16 +31,73 @@ class ReactLibrary implements ReactyLibraryInterface {
   }
 }
 
+interface DialectInterface {
+  getRenderArguments?(): string;
+  getGenericAfterExtend?(): string;
+  getBeforeRenderReturnCode?(): string;
+
+  getAdditionalImports?(): string;
+
+  getComponentProperties?(): string;
+}
+
+class DefaultDialect implements DialectInterface {
+  getRenderArguments() {
+    return "";
+  }
+}
+
+const JSX_ATTR_LIB = {
+  "preact": PreactLibrary,
+  "react": ReactLibrary
+}
+
+const DIALECT_ATTR_LIB = {
+  "js": "js",
+  "ts": "ts"
+}
+
 class CannotFindElementForComponentError extends Error {}
+class InvalidOptionsError extends Error {}
+
+class ComponentNotAttachedError extends Error {}
 
 export default class ReactyCodeGenerator implements CodeGeneratorInterface {
+  // By default we use Preact library for jsx component generation
   private library: ReactyLibraryInterface;
+  private component: VirtualComponentInterface;
 
-  constructor(library: ReactyLibraryInterface) {
-    this.library = library;
+  attachComponent(c: VirtualComponentInterface) {
+    this.component = c;
+
+    const el = c.getEl();
+
+    const jsxLibName = el.getAttribute(ATTR_JSX_LIB);
+
+    if (jsxLibName) {
+
+      
+      if (!JSX_ATTR_LIB[jsxLibName]) {
+        throw new InvalidOptionsError(
+          `Element specified ${jsxLibName} in attribute ${ATTR_JSX_LIB}, but it was not valid.
+Valid options are: ${Object.keys(JSX_ATTR_LIB)}`
+        );
+      }
+
+      this.library = new JSX_ATTR_LIB[jsxLibName]();
+    } else {
+      // This is the default
+      this.library = new PreactLibrary();
+    }
   }
 
-  public generateCode(component: VirtualComponentInterface): string {
+  public generate(): string {
+    const component = this.component;
+
+    if (!component) {
+      throw new ComponentNotAttachedError();
+    }
+
     const componentsUsages: string[] = [];
 
     let additionalImports = ``;
@@ -47,11 +109,11 @@ export default class ReactyCodeGenerator implements CodeGeneratorInterface {
 
     const el = component.getEl();
 
-    component.getChildren().forEach(c => {
+    component.getChildren().forEach(function gatheringImportAndReplacingElement(c) {
       additionalImports += `
 import ${c.getName()} from "./${c.getName()}"`;
 
-      const componentElement = el.querySelector(`[${ATTR_ID}="${c.getId()}]"`);
+      const componentElement = el.querySelector(`[${ATTR_ID}="${c.getId()}"]`);
 
       if (!componentElement) {
         throw new CannotFindElementForComponentError(
@@ -72,24 +134,21 @@ import ${c.getName()} from "./${c.getName()}"`;
         search: `<${fakeReplacementTagName}></${fakeReplacementTagName}>`,
         replace: `<${c.getName()} />`
       });
-    });
+    }, this);
 
-    const jsx: string = el.innerHTML;
+    let jsx: string = el.outerHTML;
 
     replacements.forEach(r => {
-      jsx.replace(r.search, r.replace);
+      jsx = jsx.replace(r.search, r.replace);
     });
 
     return `
-import { ${this.library.getFactoryFunctionName()}, Component } from ${this.library.getName()};
-${additionalImports}
+import { ${this.library.getFactoryFunctionName()}, Component } from ${this.library.getName()};${additionalImports}
 
 export default class ${component.getName()} extends Component {
   render() {
     return (
-      <div>
-        ${jsx}
-      </div>
+      ${jsx}
     );
   }
 }

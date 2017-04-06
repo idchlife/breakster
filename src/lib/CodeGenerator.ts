@@ -1,5 +1,16 @@
 import { VirtualComponentInterface } from "./VirtualComponent";
 
 export interface CodeGeneratorInterface {
-  generateCode(component: VirtualComponentInterface): string;
+  attachComponent(c: VirtualComponentInterface);
+  generate(): string;
+}
+
+function createCodeGenerator() {
+  
+}
+
+import ReactyCodeGenerator from "./ReactyCodeGenerator";
+
+export {
+  ReactyCodeGenerator
 }

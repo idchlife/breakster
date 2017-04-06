@@ -48,6 +48,7 @@ exports.__esModule = true;
 var fs = require("async-file");
 var jsdom = require("jsdom");
 var VirtualComponent_1 = require("./VirtualComponent");
+var CodeGenerator_1 = require("./CodeGenerator");
 var BuilderError = (function (_super) {
     __extends(BuilderError, _super);
     function BuilderError(message) {
@@ -85,7 +86,7 @@ var Builder = (function () {
     };
     Builder.prototype.build = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var fileContents, window, document, rootComponentElement, rootComponent, components;
+            var fileContents, window, document, rootComponentElement, codeGenerator, rootComponent, components;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.checkPrerequisites()];
@@ -115,9 +116,16 @@ var Builder = (function () {
                         if (!rootComponentElement) {
                             throw new BuilderError("Could not find single element suited for component creation. Check your html.");
                         }
-                        rootComponent = new VirtualComponent_1["default"](rootComponentElement, VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME);
-                        components = rootComponent.getAllChildComponentsAndItself();
-                        components.forEach(function (c) { return console.log("Component named " + c.getName()); });
+                        codeGenerator = new CodeGenerator_1.ReactyCodeGenerator();
+                        try {
+                            rootComponent = new VirtualComponent_1["default"](rootComponentElement, VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME);
+                            components = rootComponent.getAllChildComponentsAndItself();
+                            components.forEach(function (c) { return console.log(c.generateCode()); });
+                        }
+                        catch (e) {
+                            console.error(e);
+                            throw new BuilderError("There was an error while build process was active. Above - more info on error.");
+                        }
                         return [2 /*return*/];
                 }
             });

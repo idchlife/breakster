@@ -33,6 +33,14 @@ var ReactLibrary = (function () {
     };
     return ReactLibrary;
 }());
+var JSX_ATTR_LIB = {
+    "preact": PreactLibrary,
+    "react": ReactLibrary
+};
+var DIALECT_ATTR_LIB = {
+    "js": "js",
+    "ts": "ts"
+};
 var CannotFindElementForComponentError = (function (_super) {
     __extends(CannotFindElementForComponentError, _super);
     function CannotFindElementForComponentError() {
@@ -40,12 +48,43 @@ var CannotFindElementForComponentError = (function (_super) {
     }
     return CannotFindElementForComponentError;
 }(Error));
-var ReactyCodeGenerator = (function () {
-    function ReactyCodeGenerator(library) {
-        this.library = library;
+var InvalidOptionsError = (function (_super) {
+    __extends(InvalidOptionsError, _super);
+    function InvalidOptionsError() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    ReactyCodeGenerator.prototype.generateCode = function (component) {
-        var _this = this;
+    return InvalidOptionsError;
+}(Error));
+var ComponentNotAttachedError = (function (_super) {
+    __extends(ComponentNotAttachedError, _super);
+    function ComponentNotAttachedError() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ComponentNotAttachedError;
+}(Error));
+var ReactyCodeGenerator = (function () {
+    function ReactyCodeGenerator() {
+    }
+    ReactyCodeGenerator.prototype.attachComponent = function (c) {
+        this.component = c;
+        var el = c.getEl();
+        var jsxLibName = el.getAttribute(VirtualComponent_1.ATTR_JSX_LIB);
+        if (jsxLibName) {
+            if (!JSX_ATTR_LIB[jsxLibName]) {
+                throw new InvalidOptionsError("Element specified " + jsxLibName + " in attribute " + VirtualComponent_1.ATTR_JSX_LIB + ", but it was not valid.\nValid options are: " + Object.keys(JSX_ATTR_LIB));
+            }
+            this.library = new JSX_ATTR_LIB[jsxLibName]();
+        }
+        else {
+            // This is the default
+            this.library = new PreactLibrary();
+        }
+    };
+    ReactyCodeGenerator.prototype.generate = function () {
+        var component = this.component;
+        if (!component) {
+            throw new ComponentNotAttachedError();
+        }
         var componentsUsages = [];
         var additionalImports = "";
         // We will be first replacing nodes with ids of children with our special nodes,
@@ -53,13 +92,13 @@ var ReactyCodeGenerator = (function () {
         // to <Component />
         var replacements = [];
         var el = component.getEl();
-        component.getChildren().forEach(function (c) {
+        component.getChildren().forEach(function gatheringImportAndReplacingElement(c) {
             additionalImports += "\nimport " + c.getName() + " from \"./" + c.getName() + "\"";
-            var componentElement = el.querySelector("[" + VirtualComponent_1.ATTR_ID + "=\"" + c.getId() + "]\"");
+            var componentElement = el.querySelector("[" + VirtualComponent_1.ATTR_ID + "=\"" + c.getId() + "\"]");
             if (!componentElement) {
                 throw new CannotFindElementForComponentError("Was trying to find element with " + VirtualComponent_1.ATTR_ID + "=" + c.getId() + " from component " + c.getName() + ". Could not find.");
             }
-            var fakeReplacementTagName = _this.createFakeReplacementTagName();
+            var fakeReplacementTagName = this.createFakeReplacementTagName();
             // Replacing this element with fake, which will be then replaced in string
             componentElement.parentElement.replaceChild(el.ownerDocument.createElement(fakeReplacementTagName), componentElement);
             // Creating replacements for fututre components
@@ -67,12 +106,12 @@ var ReactyCodeGenerator = (function () {
                 search: "<" + fakeReplacementTagName + "></" + fakeReplacementTagName + ">",
                 replace: "<" + c.getName() + " />"
             });
-        });
-        var jsx = el.innerHTML;
+        }, this);
+        var jsx = el.outerHTML;
         replacements.forEach(function (r) {
-            jsx.replace(r.search, r.replace);
+            jsx = jsx.replace(r.search, r.replace);
         });
-        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from " + this.library.getName() + ";\n" + additionalImports + "\n\nexport default class " + component.getName() + " extends Component {\n  render() {\n    return (\n      <div>\n        " + jsx + "\n      </div>\n    );\n  }\n}\n";
+        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from " + this.library.getName() + ";" + additionalImports + "\n\nexport default class " + component.getName() + " extends Component {\n  render() {\n    return (\n      " + jsx + "\n    );\n  }\n}\n";
     };
     ReactyCodeGenerator.prototype.createFakeReplacementTagName = function () {
         return String("component-" + Math.ceil(Math.random() * 100000));

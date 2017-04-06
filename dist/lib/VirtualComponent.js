@@ -10,6 +10,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 exports.__esModule = true;
+var ReactyCodeGenerator_1 = require("./ReactyCodeGenerator");
 var VirtualComponentParsingError = (function (_super) {
     __extends(VirtualComponentParsingError, _super);
     function VirtualComponentParsingError() {
@@ -36,17 +37,25 @@ var VirtualComponentInitializationError = (function (_super) {
 var ATTR_NAME = "j-name";
 exports.ATTR_ID = "j-id";
 exports.DEFAULT_COMPONENT_ATTR_NAME = "j-comp";
+exports.ATTR_DIALECT = "j-dialect";
+exports.ATTR_JSX_LIB = "j-jsx-lib";
 var VirtualComponent = (function () {
-    function VirtualComponent(el, componentAttr) {
+    function VirtualComponent(el, componentAttr, codeGenerator) {
+        if (codeGenerator === void 0) { codeGenerator = new ReactyCodeGenerator_1["default"](); }
         // Innter components
         this.children = [];
         if (!componentAttr) {
             throw new VirtualComponentInitializationError("Required argument componentAttr was not provided.");
         }
+        if (!codeGenerator) {
+            throw new VirtualComponentInitializationError("Required argument codeGenerator was not provided.");
+        }
         this.validateRootElement(el);
         this.el = el;
         this.name = el.getAttribute(ATTR_NAME);
         this.componentAttr = componentAttr;
+        this.codeGenerator = codeGenerator;
+        this.codeGenerator.attachComponent(this);
         this.parseRootHTMLElement();
     }
     VirtualComponent.prototype.setCodeGenerator = function (cg) {
@@ -72,10 +81,12 @@ var VirtualComponent = (function () {
     VirtualComponent.prototype.getId = function () {
         return this.id;
     };
+    VirtualComponent.prototype.generateCode = function () {
+        return this.codeGenerator.generate();
+    };
     VirtualComponent.prototype.getAllChildComponentsAndItself = function () {
         var arr = [this];
-        console.log("Getting children from " + this.getName());
-        this.children.forEach(function (c) { return arr.concat(c.getAllChildComponentsAndItself()); });
+        this.children.forEach(function (c) { return arr = arr.concat(c.getAllChildComponentsAndItself()); });
         return arr;
     };
     VirtualComponent.prototype.validateRootElement = function (el) {
@@ -96,7 +107,12 @@ var VirtualComponent = (function () {
                 // Filling with elements. Also filtered above by nodeType === 1 so
                 // we will be working only with element nodes, not text/comment etc
                 arr.forEach(function parseChildNode(el) {
-                    // Finding first occurence of element
+                    // If child itself is component root
+                    if (el.getAttribute(ATTR_NAME)) {
+                        discoveredComponentRoots_1.push(el);
+                        return;
+                    }
+                    // Finding first occurence of element in children of this child
                     var foundElement = el.querySelector("[" + this.componentAttr + "]");
                     if (foundElement) {
                         discoveredComponentRoots_1.push(foundElement);
@@ -107,7 +123,7 @@ var VirtualComponent = (function () {
             discoveredComponentRoots_1.forEach(function creatingComponent(el) {
                 var id = this.generateUniqueId();
                 el.setAttribute(exports.ATTR_ID, id);
-                this.children.push(new VirtualComponent(el.cloneNode(true), this.componentAttr).setId(id));
+                this.children.push(new VirtualComponent(el.cloneNode(true), this.componentAttr, new ReactyCodeGenerator_1["default"]()).setId(id));
             }, this);
         }
         catch (e) {

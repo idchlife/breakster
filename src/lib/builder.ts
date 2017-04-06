@@ -2,6 +2,8 @@ import * as fs from "async-file";
 import * as jsdom from "jsdom";
 import Component, { Language } from "./parts/component";
 import VirtualComponent, { DEFAULT_COMPONENT_ATTR_NAME } from "./VirtualComponent";
+import { ReactyCodeGenerator } from "./CodeGenerator";
+
 
 class BuilderError extends Error {
   constructor(message: string) {
@@ -68,7 +70,7 @@ class Builder {
       });
     });
 
-    const document: Document = window.document;
+    const document: Document = window.document
 
     // Finding first occurence of component element
     const rootComponentElement = document.body.querySelector(`[${DEFAULT_COMPONENT_ATTR_NAME}]`);
@@ -77,11 +79,22 @@ class Builder {
       throw new BuilderError("Could not find single element suited for component creation. Check your html.");
     }
 
-    const rootComponent = new VirtualComponent(rootComponentElement as HTMLElement, DEFAULT_COMPONENT_ATTR_NAME);
+    const codeGenerator = new ReactyCodeGenerator();
 
-    const components: VirtualComponent[] = rootComponent.getAllChildComponentsAndItself();
+    try {
+      const rootComponent = new VirtualComponent(
+        rootComponentElement as HTMLElement,
+        DEFAULT_COMPONENT_ATTR_NAME
+      );
 
-    components.forEach(c => console.log(`Component named ${c.getName()}`));
+      const components: VirtualComponent[] = rootComponent.getAllChildComponentsAndItself();
+
+      components.forEach(c => console.log(c.generateCode()));
+    } catch (e) {
+      console.error(e);
+
+      throw new BuilderError("There was an error while build process was active. Above - more info on error.");
+    }
 
     // await componentElements.forEach(async (el: HTMLElement) => {
     //   try {
