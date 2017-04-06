@@ -47,7 +47,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var fs = require("async-file");
 var jsdom = require("jsdom");
-var component_1 = require("./parts/component");
+var VirtualComponent_1 = require("./VirtualComponent");
 var BuilderError = (function (_super) {
     __extends(BuilderError, _super);
     function BuilderError(message) {
@@ -57,19 +57,35 @@ var BuilderError = (function (_super) {
 }(Error));
 exports.TYPE_LAYOUT = "layout";
 exports.TYPE_LAYOUT_CONTENT = "layout-content";
+var ALLOWED_LANGUAGES = [
+    "javascript",
+    "typescript"
+];
+var FILE_EXTENSIONS = (_a = {},
+    _a[ALLOWED_LANGUAGES[0]] = "jsx",
+    _a[ALLOWED_LANGUAGES[0]] = "tsx",
+    _a);
 var Builder = (function () {
-    function Builder(inputFile, outputFolder) {
+    function Builder(inputFile, outputFolder, debug) {
+        if (debug === void 0) { debug = true; }
         this.tag = "comp";
+        this.language = "javascript";
+        this.debug = false;
         if (!inputFile || !outputFolder) {
             throw new BuilderError("You must pass inputFile and outputFolder in Builder constructor");
         }
         this.inputFile = inputFile;
         this.outputFolder = outputFolder;
+        this.debug = debug;
     }
+    Builder.prototype.setLanguage = function (lang) {
+        if (!ALLOWED_LANGUAGES.find(function (l) { return l === lang; })) {
+            throw new BuilderError("Language " + lang + " is not supported");
+        }
+    };
     Builder.prototype.build = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            var fileContents, window, document, componentElements, components;
+            var fileContents, window, document, rootComponentElement, rootComponent, components;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.checkPrerequisites()];
@@ -95,40 +111,17 @@ var Builder = (function () {
                     case 3:
                         window = _a.sent();
                         document = window.document;
-                        componentElements = Array.from(document.querySelectorAll(this.tag));
-                        if (!componentElements.length) {
-                            console.info("Could not find any tags for components in file " + this.inputFile + ". Did you provide wrong file?");
-                            return [2 /*return*/];
+                        rootComponentElement = document.body.querySelector("[" + VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME + "]");
+                        if (!rootComponentElement) {
+                            throw new BuilderError("Could not find single element suited for component creation. Check your html.");
                         }
-                        components = [];
-                        componentElements.forEach(function (el) {
-                            try {
-                                var name_1 = el.getAttribute("name");
-                                // Custom layout content handling
-                                if (exports.TYPE_LAYOUT_CONTENT === el.getAttribute("type")) {
-                                    return;
-                                }
-                                _this.validateComponentElement(el);
-                                // TODO: provide component with attributes for further extending component
-                                var component = new component_1["default"](name_1);
-                                component.processHTMLElement(el, _this.tag, document);
-                                components.push(component);
-                                console.log(component.generateCode());
-                            }
-                            catch (e) {
-                                console.error(e.stack);
-                                throw new BuilderError("Something gone wrong in the building process. Loggin error info before this error.");
-                            }
-                        }, this);
+                        rootComponent = new VirtualComponent_1["default"](rootComponentElement, VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME);
+                        components = rootComponent.getAllChildComponentsAndItself();
+                        components.forEach(function (c) { return console.log("Component named " + c.getName()); });
                         return [2 /*return*/];
                 }
             });
         });
-    };
-    Builder.prototype.validateComponentElement = function (element) {
-        if (!element.getAttribute("name")) {
-            throw new BuilderError("In one of your component tags you did not specify 'name' attribute. It is required.");
-        }
     };
     Builder.prototype.checkPrerequisites = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -161,3 +154,4 @@ var Builder = (function () {
     return Builder;
 }());
 exports["default"] = Builder;
+var _a;

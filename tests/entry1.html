@@ -3,26 +3,43 @@
     <title></title>
   </head>
   <body>
-    <comp name="IndexPage">
-      <comp type="layout" name="Layout">
+    <div j-comp j-name="IndexPage">
+      <div j-comp j-name="Layout">
         <header>
           <div>User</div>
-          <comp name="UserInfo">
+          <div j-comp j-name="UserInfo">
             <div class="user-info-class">Username: Alan</div>
-          </comp>
+          </div>
         </header>
-        <comp type="layout-content">
-          <comp name="Product">
-            <div>Product name</div>
-            <div>Product price</div>
-            <div>Product count</div>
-            <comp name="BuyButton">
-              <button>buy</button>
-            </comp>
-          </comp>
-        </comp>
-        <comp name="EmptyComponent"></comp>
-      </comp>
-    </comp>
+        <div j-comp j-name="Product">
+          <div>Product name</div>
+          <div>Product price</div>
+          <div>Product count</div>
+          <div j-comp j-name="BuyButton">
+            <button>buy</button>
+            <div>
+              <div>Buy as</div>
+              <div j-comp j-name="UserInfo"></div>
+            </div>
+          </div>
+        </div>
+        <table j-comp j-name="Table">
+          <thead>
+            <tr>
+              <td>Header first</td>
+              <td>Header second</td>
+              <td>Header third</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr j-comp j-name="TableRow">
+              <td>First</td>
+              <td>Second</td>
+              <td>Third</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </body>
 </html>

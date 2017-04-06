@@ -1,11 +1,15 @@
 import { CodeGeneratorInterface } from "../types";
-import { TYPE_LAYOUT, TYPE_LAYOUT_CONTENT } from "../builder";
+import {
+  TYPE_LAYOUT,
+  TYPE_LAYOUT_CONTENT
+} from "../builder";
 
 interface Replacement {
   element: string,
   component: string
 }
 
+export type Language = "javascript" | "typescript";
 type Replacements = Array<Replacement>;
 
 export default class Component implements CodeGeneratorInterface {
@@ -20,6 +24,8 @@ export default class Component implements CodeGeneratorInterface {
 
   private jsxHasSingleNode: string = "";
 
+  private language: Language;
+
   /**
    * Another components names
    */
@@ -27,10 +33,13 @@ export default class Component implements CodeGeneratorInterface {
 
   private codeLinesBeforeRenderReturn: string[] = [];
 
+  private genericCodeAfterComponentExtending: string = "";
+
   private isLayout: boolean = false;
 
-  constructor(name: string) {
+  constructor(name: string, language: Language = "javascript") {
     this.name = name;
+    this.language = language;
   }
 
   private addExternalComponentName(name: string) {
@@ -67,7 +76,7 @@ export default class Component implements CodeGeneratorInterface {
 
     // First we replacing all type="layout" components.
 
-    const innerComponents = Array.from(el.querySelectorAll(componentTag));
+    const innerComponents = Array.from(el.querySelectorAll(`${componentTag}, [${componentTag}]`));
 
     innerComponents.forEach(componentEl => {
       // console.log(`Inside component ${this.name} working with component ${componentEl.getAttribute("name")}`);
@@ -116,15 +125,12 @@ export default class Component implements CodeGeneratorInterface {
         replacements.push({
           element: `<${customReplacementName}>`,
           component: `
-<${name}>
-          `
+<${name}>`
         });
 
         replacements.push({
           element: `</${customReplacementName}>`,
-          component: `
-</${name}>
-          `
+          component: `</${name}>`
         });
       } else {
         // Dealing with simple component
@@ -144,7 +150,8 @@ export default class Component implements CodeGeneratorInterface {
       componentEl.parentElement.replaceChild(componentNode, componentEl);
     }, this);
 
-    let jsxString: string = el.innerHTML;
+    // Checking using component tag or component as attribute
+    let jsxString: string = el.nodeName === componentTag ? el.innerHTML : el.outerHTML;
 
     // Replacing every component
     replacements.forEach(r => {
@@ -199,10 +206,14 @@ import ${module} from "./${module}";`;
       });
     }
 
+    if (this.language === "typescript") {
+      this.genericCodeAfterComponentExtending = "<any, any>";
+    }
+
     const template = `
 ${imports}
 
-export default class ${this.name} extends Component {
+export default class ${this.name} extends Component${this.genericCodeAfterComponentExtending} {
   render() {
     return (
       <div>

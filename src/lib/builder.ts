@@ -1,6 +1,7 @@
 import * as fs from "async-file";
 import * as jsdom from "jsdom";
-import Component from "./parts/component";
+import Component, { Language } from "./parts/component";
+import VirtualComponent, { DEFAULT_COMPONENT_ATTR_NAME } from "./VirtualComponent";
 
 class BuilderError extends Error {
   constructor(message: string) {
@@ -11,22 +12,39 @@ class BuilderError extends Error {
 export const TYPE_LAYOUT = "layout";
 export const TYPE_LAYOUT_CONTENT = "layout-content";
 
-interface ComponentPreparations {
-  [componentName: string]: string;
-}
+const ALLOWED_LANGUAGES = [
+  "javascript",
+  "typescript"
+];
+
+const FILE_EXTENSIONS = {
+  [ALLOWED_LANGUAGES[0]]: "jsx",
+  [ALLOWED_LANGUAGES[0]]: "tsx"
+};
 
 class Builder {
   private inputFile: string;
   private outputFolder: string;
   private tag: string = "comp";
+  private language: Language = "javascript";
+  private debug: boolean = false;
 
-  constructor(inputFile: string, outputFolder: string) {
+  constructor(inputFile: string, outputFolder: string, debug = true) {
     if (!inputFile || !outputFolder) {
       throw new BuilderError("You must pass inputFile and outputFolder in Builder constructor");
     }
 
     this.inputFile = inputFile;
     this.outputFolder = outputFolder;
+    this.debug = debug;
+  }
+
+  public setLanguage(lang: string) {
+    if (!ALLOWED_LANGUAGES.find(l => l === lang)) {
+      throw new BuilderError(
+        `Language ${lang} is not supported`
+      );
+    }
   }
 
   public async build() {
@@ -52,53 +70,66 @@ class Builder {
 
     const document: Document = window.document;
 
-    const componentElements = Array.from(document.querySelectorAll(this.tag));
+    // Finding first occurence of component element
+    const rootComponentElement = document.body.querySelector(`[${DEFAULT_COMPONENT_ATTR_NAME}]`);
 
-    if (!componentElements.length) {
-      console.info(
-        `Could not find any tags for components in file ${this.inputFile}. Did you provide wrong file?`
-      );
-
-      return;
+    if (!rootComponentElement) {
+      throw new BuilderError("Could not find single element suited for component creation. Check your html.");
     }
 
-    const components: Array<Component> = [];
+    const rootComponent = new VirtualComponent(rootComponentElement as HTMLElement, DEFAULT_COMPONENT_ATTR_NAME);
 
-    componentElements.forEach((el: HTMLElement) => {
-      try {
-        const name: string = el.getAttribute("name");
+    const components: VirtualComponent[] = rootComponent.getAllChildComponentsAndItself();
 
-        // Custom layout content handling
-        if (TYPE_LAYOUT_CONTENT === el.getAttribute("type")) {
-          return;
-        }
+    components.forEach(c => console.log(`Component named ${c.getName()}`));
 
-        this.validateComponentElement(el);
+    // await componentElements.forEach(async (el: HTMLElement) => {
+    //   try {
+    //     const name: string = el.getAttribute("name");
 
-        // TODO: provide component with attributes for further extending component
-        const component = new Component(name);
+    //     // Custom layout content handling
+    //     if (TYPE_LAYOUT_CONTENT === el.getAttribute("type")) {
+    //       return;
+    //     }
 
-        component.processHTMLElement(el, this.tag, document);
+    //     // If component has no children and has name of already
+    //     // created Component, omit it
+    //     if (components.find(c => c.getName() === name) && !el.childNodes.length) {
+    //       return;
+    //     }
 
-        components.push(component);
+    //     this.validateComponentElement(el);
 
-        console.log(component.generateCode());
-      } catch (e) {
-        console.error(e.stack);
+    //     // TODO: provide component with attributes for further extending component
+    //     const component = new Component(name, this.language);
 
-        throw new BuilderError(
-          `Something gone wrong in the building process. Loggin error info before this error.`
-        );
-      }
-    }, this);
-  }
+    //     component.processHTMLElement(el, this.tag, document);
 
-  private validateComponentElement(element: HTMLElement) {
-    if (!element.getAttribute("name")) {
-      throw new BuilderError(
-        "In one of your component tags you did not specify 'name' attribute. It is required."
-      );
-    }
+    //     components.push(component);
+
+    //     if (this.debug) {
+    //       console.log(component.generateCode());
+    //     } else {
+    //       // Using output folder
+    //       let outDir = this.outputFolder;
+    //       let componentOutDir = outDir[outDir.length - 1] === "/" ? outDir + "components/" : outDir + "/components/";
+
+    //       await fs.writeFile(
+    //         componentOutDir + `${name}.${FILE_EXTENSIONS[this.language]}`,
+    //         component.generateCode()
+    //       );
+    //     }
+
+    //     // Saving component output into file
+        
+    //   } catch (e) {
+    //     console.error(e.stack);
+
+    //     throw new BuilderError(
+    //       `Something gone wrong in the building process. Loggin error info before this error.`
+    //     );
+    //   }
+    // }, this);
   }
 
   private async checkPrerequisites() {

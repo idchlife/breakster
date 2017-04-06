@@ -11,10 +11,12 @@
   "license": "ISC",
   "dependencies": {
     "@types/jsdom": "^2.0.30",
+    "@types/minimist": "^1.2.0",
     "@types/node": "^7.0.12",
     "async-file": "^2.0.2",
     "fs": "0.0.1-security",
-    "jsdom": "^9.12.0"
+    "jsdom": "^9.12.0",
+    "minimist": "^1.2.0"
   },
   "devDependencies": {
     "typescript": "^2.2.2"
