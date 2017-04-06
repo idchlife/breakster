@@ -9,9 +9,47 @@ import {
 interface ReactyLibraryInterface {
   getFactoryFunctionName(): string;
   getName(): string;
+
+  getRenderArguments?(): string;
+  
+  getGenericAfterExtend?(): string;
+  getBeforeRenderReturnCode?(): string;
+
+  getAdditionalImports?(): string;
+
+  getComponentProperties?(): string;
+
+  provideDialect?(d: Dialect);
 }
 
-class PreactLibrary implements ReactyLibraryInterface {
+abstract class ReactyLibrary {
+  getFactoryFunctionName() { return "" }
+
+  getName() { return "" }
+
+  getRenderArguments() { return "" }
+  
+  getGenericAfterExtend() { return "" }
+  getBeforeRenderReturnCode() { return "" }
+
+  getAdditionalImports() { return "" }
+
+  getComponentProperties() { return "" }
+
+  provideDialect(d: Dialect) {}
+}
+
+class PreactLibrary extends ReactyLibrary {
+  private component: VirtualComponentInterface;
+
+  private dialect: Dialect;
+
+  constructor(c: VirtualComponentInterface) {
+    super();
+
+    this.component = c;
+  }
+
   getFactoryFunctionName() {
     return "h";
   }
@@ -19,9 +57,17 @@ class PreactLibrary implements ReactyLibraryInterface {
   getName() {
     return "preact";
   }
+
+  getRenderArguments(): string {
+    return "props, state";
+  }
+
+  provideDialect(d: Dialect) {
+    this.dialect = d;
+  }
 }
 
-class ReactLibrary implements ReactyLibraryInterface {
+class ReactLibrary extends ReactyLibrary {
   getFactoryFunctionName() {
     return "React";
   }
@@ -31,19 +77,22 @@ class ReactLibrary implements ReactyLibraryInterface {
   }
 }
 
-interface DialectInterface {
-  getRenderArguments?(): string;
-  getGenericAfterExtend?(): string;
-  getBeforeRenderReturnCode?(): string;
-
-  getAdditionalImports?(): string;
-
-  getComponentProperties?(): string;
+class Dialect {
+  public static getAttrValue(): string {
+    // This is default value
+    return "";
+  }
 }
 
-class DefaultDialect implements DialectInterface {
-  getRenderArguments() {
-    return "";
+class JavaScript implements Dialect {
+  public static getAttrValue(): string {
+    return "js";
+  }
+}
+
+class TypeScript implements Dialect {
+  public static getAttrValue(): string {
+    return "ts";
   }
 }
 
@@ -53,8 +102,8 @@ const JSX_ATTR_LIB = {
 }
 
 const DIALECT_ATTR_LIB = {
-  "js": "js",
-  "ts": "ts"
+  [JavaScript.getAttrValue()]: JavaScript,
+  [TypeScript.getAttrValue()]: TypeScript
 }
 
 class CannotFindElementForComponentError extends Error {}
@@ -72,11 +121,24 @@ export default class ReactyCodeGenerator implements CodeGeneratorInterface {
 
     const el = c.getEl();
 
+    const dialectAttrValue = el.getAttribute(ATTR_DIALECT);
+    let dialect: Dialect;
+
+    if (dialectAttrValue) {
+      if (!DIALECT_ATTR_LIB[dialectAttrValue]) {
+        throw new InvalidOptionsError(
+          `Invalid dialect via ${ATTR_DIALECT} attribute, allowed dialects: ${Object.keys(DIALECT_ATTR_LIB)}`
+        )
+      }
+
+      dialect = new DIALECT_ATTR_LIB[dialectAttrValue]();
+    } else {
+      dialect = new JavaScript();
+    }
+
     const jsxLibName = el.getAttribute(ATTR_JSX_LIB);
 
     if (jsxLibName) {
-
-      
       if (!JSX_ATTR_LIB[jsxLibName]) {
         throw new InvalidOptionsError(
           `Element specified ${jsxLibName} in attribute ${ATTR_JSX_LIB}, but it was not valid.
@@ -87,7 +149,11 @@ Valid options are: ${Object.keys(JSX_ATTR_LIB)}`
       this.library = new JSX_ATTR_LIB[jsxLibName]();
     } else {
       // This is the default
-      this.library = new PreactLibrary();
+      this.library = new PreactLibrary(c);
+    }
+
+    if (this.library.provideDialect) {
+      this.library.provideDialect(dialect);
     }
   }
 
@@ -142,11 +208,13 @@ import ${c.getName()} from "./${c.getName()}"`;
       jsx = jsx.replace(r.search, r.replace);
     });
 
+    const l: ReactyLibraryInterface = this.library;
+
     return `
 import { ${this.library.getFactoryFunctionName()}, Component } from ${this.library.getName()};${additionalImports}
 
-export default class ${component.getName()} extends Component {
-  render() {
+export default class ${component.getName()} extends Component${l.getGenericAfterExtend && l.getGenericAfterExtend()} {
+  render(${l.getRenderArguments()}) {
     return (
       ${jsx}
     );

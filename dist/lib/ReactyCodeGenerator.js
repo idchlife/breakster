@@ -11,8 +11,25 @@ var __extends = (this && this.__extends) || (function () {
 })();
 exports.__esModule = true;
 var VirtualComponent_1 = require("./VirtualComponent");
-var PreactLibrary = (function () {
-    function PreactLibrary() {
+var ReactyLibrary = (function () {
+    function ReactyLibrary() {
+    }
+    ReactyLibrary.prototype.getFactoryFunctionName = function () { return ""; };
+    ReactyLibrary.prototype.getName = function () { return ""; };
+    ReactyLibrary.prototype.getRenderArguments = function () { return ""; };
+    ReactyLibrary.prototype.getGenericAfterExtend = function () { return ""; };
+    ReactyLibrary.prototype.getBeforeRenderReturnCode = function () { return ""; };
+    ReactyLibrary.prototype.getAdditionalImports = function () { return ""; };
+    ReactyLibrary.prototype.getComponentProperties = function () { return ""; };
+    ReactyLibrary.prototype.provideDialect = function (d) { };
+    return ReactyLibrary;
+}());
+var PreactLibrary = (function (_super) {
+    __extends(PreactLibrary, _super);
+    function PreactLibrary(c) {
+        var _this = _super.call(this) || this;
+        _this.component = c;
+        return _this;
     }
     PreactLibrary.prototype.getFactoryFunctionName = function () {
         return "h";
@@ -20,10 +37,18 @@ var PreactLibrary = (function () {
     PreactLibrary.prototype.getName = function () {
         return "preact";
     };
+    PreactLibrary.prototype.getRenderArguments = function () {
+        return "props, state";
+    };
+    PreactLibrary.prototype.provideDialect = function (d) {
+        this.dialect = d;
+    };
     return PreactLibrary;
-}());
-var ReactLibrary = (function () {
+}(ReactyLibrary));
+var ReactLibrary = (function (_super) {
+    __extends(ReactLibrary, _super);
     function ReactLibrary() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     ReactLibrary.prototype.getFactoryFunctionName = function () {
         return "React";
@@ -32,15 +57,40 @@ var ReactLibrary = (function () {
         return "React";
     };
     return ReactLibrary;
+}(ReactyLibrary));
+var Dialect = (function () {
+    function Dialect() {
+    }
+    Dialect.getAttrValue = function () {
+        // This is default value
+        return "";
+    };
+    return Dialect;
+}());
+var JavaScript = (function () {
+    function JavaScript() {
+    }
+    JavaScript.getAttrValue = function () {
+        return "js";
+    };
+    return JavaScript;
+}());
+var TypeScript = (function () {
+    function TypeScript() {
+    }
+    TypeScript.getAttrValue = function () {
+        return "ts";
+    };
+    return TypeScript;
 }());
 var JSX_ATTR_LIB = {
     "preact": PreactLibrary,
     "react": ReactLibrary
 };
-var DIALECT_ATTR_LIB = {
-    "js": "js",
-    "ts": "ts"
-};
+var DIALECT_ATTR_LIB = (_a = {},
+    _a[JavaScript.getAttrValue()] = JavaScript,
+    _a[TypeScript.getAttrValue()] = TypeScript,
+    _a);
 var CannotFindElementForComponentError = (function (_super) {
     __extends(CannotFindElementForComponentError, _super);
     function CannotFindElementForComponentError() {
@@ -68,6 +118,17 @@ var ReactyCodeGenerator = (function () {
     ReactyCodeGenerator.prototype.attachComponent = function (c) {
         this.component = c;
         var el = c.getEl();
+        var dialectAttrValue = el.getAttribute(VirtualComponent_1.ATTR_DIALECT);
+        var dialect;
+        if (dialectAttrValue) {
+            if (!DIALECT_ATTR_LIB[dialectAttrValue]) {
+                throw new InvalidOptionsError("Invalid dialect via " + VirtualComponent_1.ATTR_DIALECT + " attribute, allowed dialects: " + Object.keys(DIALECT_ATTR_LIB));
+            }
+            dialect = new DIALECT_ATTR_LIB[dialectAttrValue]();
+        }
+        else {
+            dialect = new JavaScript();
+        }
         var jsxLibName = el.getAttribute(VirtualComponent_1.ATTR_JSX_LIB);
         if (jsxLibName) {
             if (!JSX_ATTR_LIB[jsxLibName]) {
@@ -77,7 +138,10 @@ var ReactyCodeGenerator = (function () {
         }
         else {
             // This is the default
-            this.library = new PreactLibrary();
+            this.library = new PreactLibrary(c);
+        }
+        if (this.library.provideDialect) {
+            this.library.provideDialect(dialect);
         }
     };
     ReactyCodeGenerator.prototype.generate = function () {
@@ -111,7 +175,8 @@ var ReactyCodeGenerator = (function () {
         replacements.forEach(function (r) {
             jsx = jsx.replace(r.search, r.replace);
         });
-        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from " + this.library.getName() + ";" + additionalImports + "\n\nexport default class " + component.getName() + " extends Component {\n  render() {\n    return (\n      " + jsx + "\n    );\n  }\n}\n";
+        var l = this.library;
+        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from " + this.library.getName() + ";" + additionalImports + "\n\nexport default class " + component.getName() + " extends Component" + (l.getGenericAfterExtend && l.getGenericAfterExtend()) + " {\n  render(" + l.getRenderArguments() + ") {\n    return (\n      " + jsx + "\n    );\n  }\n}\n";
     };
     ReactyCodeGenerator.prototype.createFakeReplacementTagName = function () {
         return String("component-" + Math.ceil(Math.random() * 100000));
@@ -119,3 +184,4 @@ var ReactyCodeGenerator = (function () {
     return ReactyCodeGenerator;
 }());
 exports["default"] = ReactyCodeGenerator;
+var _a;
