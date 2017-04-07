@@ -5,6 +5,10 @@ export interface CodeGeneratorInterface {
   generate(): string;
 }
 
+export interface ComponentCodeGeneratorInterface extends CodeGeneratorInterface {
+  attachComponent(c: VirtualComponentInterface);
+}
+
 function createCodeGenerator() {
   
 }

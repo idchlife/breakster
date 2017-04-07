@@ -69,8 +69,6 @@ var FILE_EXTENSIONS = (_a = {},
 var Builder = (function () {
     function Builder(inputFile, outputFolder, debug) {
         if (debug === void 0) { debug = true; }
-        this.tag = "comp";
-        this.language = "javascript";
         this.debug = false;
         if (!inputFile || !outputFolder) {
             throw new BuilderError("You must pass inputFile and outputFolder in Builder constructor");
@@ -119,7 +117,7 @@ var Builder = (function () {
                         codeGenerator = new CodeGenerator_1.ReactyCodeGenerator();
                         try {
                             rootComponent = new VirtualComponent_1["default"](rootComponentElement, VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME);
-                            components = rootComponent.getAllChildComponentsAndItself();
+                            components = rootComponent.collectAllSubChildrenAndItself();
                             components.forEach(function (c) { return console.log(c.generateCode()); });
                         }
                         catch (e) {

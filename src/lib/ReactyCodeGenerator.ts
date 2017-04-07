@@ -1,4 +1,4 @@
-import { CodeGeneratorInterface } from "./CodeGenerator";
+import { CodeGeneratorInterface, ComponentCodeGeneratorInterface } from './CodeGenerator';
 import {
   VirtualComponentInterface,
   ATTR_ID,
@@ -9,40 +9,61 @@ import {
 interface ReactyLibraryInterface {
   getFactoryFunctionName(): string;
   getName(): string;
-
   getRenderArguments?(): string;
-  
   getGenericAfterExtend?(): string;
   getBeforeRenderReturnCode?(): string;
-
   getAdditionalImports?(): string;
-
   getComponentProperties?(): string;
-
+  getBeforComponentDeclarationCode?(): string;
   provideDialect?(d: Dialect);
+  getDialect?(): Dialect;
 }
 
 abstract class ReactyLibrary {
+  // Default dialect is JavaScript
+  protected dialect: Dialect = new JavaScript();
+
   getFactoryFunctionName() { return "" }
 
   getName() { return "" }
 
   getRenderArguments() { return "" }
   
-  getGenericAfterExtend() { return "" }
+  getGenericAfterExtend() {
+    if (this.dialect instanceof TypeScript) {
+      return "<Props, State>";
+    }
+
+    return "";
+  }
   getBeforeRenderReturnCode() { return "" }
 
   getAdditionalImports() { return "" }
 
   getComponentProperties() { return "" }
 
-  provideDialect(d: Dialect) {}
+  getBeforComponentDeclarationCode?(): string {
+    if (this.dialect instanceof TypeScript) {
+      return `
+interface Props {}
+interface State {}
+`
+    }
+
+    return "";
+  };
+
+  provideDialect(d: Dialect) {
+    this.dialect = d;
+  }
+
+  public getDialect(): Dialect {
+    return this.dialect;
+  }
 }
 
 class PreactLibrary extends ReactyLibrary {
   private component: VirtualComponentInterface;
-
-  private dialect: Dialect;
 
   constructor(c: VirtualComponentInterface) {
     super();
@@ -61,10 +82,6 @@ class PreactLibrary extends ReactyLibrary {
   getRenderArguments(): string {
     return "props, state";
   }
-
-  provideDialect(d: Dialect) {
-    this.dialect = d;
-  }
 }
 
 class ReactLibrary extends ReactyLibrary {
@@ -77,22 +94,29 @@ class ReactLibrary extends ReactyLibrary {
   }
 }
 
-class Dialect {
+abstract class Dialect {
+  public getFileExtension(): string {
+    return "js";
+  }
   public static getAttrValue(): string {
     // This is default value
     return "";
   }
 }
 
-class JavaScript implements Dialect {
+class JavaScript extends Dialect {
   public static getAttrValue(): string {
-    return "js";
+    return "javascript";
   }
 }
 
-class TypeScript implements Dialect {
-  public static getAttrValue(): string {
+class TypeScript extends Dialect {
+  public getFileExtension(): string {
     return "ts";
+  }
+
+  public static getAttrValue(): string {
+    return "typescript";
   }
 }
 
@@ -111,17 +135,24 @@ class InvalidOptionsError extends Error {}
 
 class ComponentNotAttachedError extends Error {}
 
-export default class ReactyCodeGenerator implements CodeGeneratorInterface {
+export default class ReactyCodeGenerator implements ComponentCodeGeneratorInterface {
   // By default we use Preact library for jsx component generation
   private library: ReactyLibraryInterface;
   private component: VirtualComponentInterface;
 
   attachComponent(c: VirtualComponentInterface) {
     this.component = c;
+  }
+
+  private processComponent() {
+    const c = this.component;
 
     const el = c.getEl();
 
-    const dialectAttrValue = el.getAttribute(ATTR_DIALECT);
+    let dialectAttrValue = c.findAttributeValueThrouItselfAndParents(ATTR_DIALECT);
+    
+    // Trying to find dialect from parent components
+
     let dialect: Dialect;
 
     if (dialectAttrValue) {
@@ -158,6 +189,8 @@ Valid options are: ${Object.keys(JSX_ATTR_LIB)}`
   }
 
   public generate(): string {
+    this.processComponent();
+
     const component = this.component;
 
     if (!component) {
@@ -187,7 +220,7 @@ import ${c.getName()} from "./${c.getName()}"`;
         );
       }
 
-      const fakeReplacementTagName = this.createFakeReplacementTagName();
+      const fakeReplacementTagName = (this as ReactyCodeGenerator).createFakeReplacementTagName();
 
       // Replacing this element with fake, which will be then replaced in string
       componentElement.parentElement.replaceChild(
@@ -213,14 +246,21 @@ import ${c.getName()} from "./${c.getName()}"`;
     return `
 import { ${this.library.getFactoryFunctionName()}, Component } from ${this.library.getName()};${additionalImports}
 
-export default class ${component.getName()} extends Component${l.getGenericAfterExtend && l.getGenericAfterExtend()} {
+${l.getBeforComponentDeclarationCode()}
+
+export default class ${component.getName()} extends Component${l.getGenericAfterExtend()} {
   render(${l.getRenderArguments()}) {
+    ${l.getBeforeRenderReturnCode()}
     return (
       ${jsx}
     );
   }
 }
 `;
+  }
+
+  public getFileExtension() {
+    return this.library.getDialect().getFileExtension();
   }
 
   private createFakeReplacementTagName(): string {

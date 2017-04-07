@@ -62,6 +62,13 @@ var VirtualComponent = (function () {
         this.codeGenerator = cg;
         return this;
     };
+    VirtualComponent.prototype.getParent = function () {
+        return this.parent;
+    };
+    VirtualComponent.prototype.setParent = function (p) {
+        this.parent = p;
+        return this;
+    };
     VirtualComponent.prototype.getName = function () {
         return this.name;
     };
@@ -84,9 +91,19 @@ var VirtualComponent = (function () {
     VirtualComponent.prototype.generateCode = function () {
         return this.codeGenerator.generate();
     };
-    VirtualComponent.prototype.getAllChildComponentsAndItself = function () {
+    VirtualComponent.prototype.findAttributeValueThrouItselfAndParents = function (attr) {
+        var value = this.el.getAttribute(attr);
+        if (!value) {
+            if (this.parent) {
+                return this.parent.findAttributeValueThrouItselfAndParents(attr);
+            }
+            return undefined;
+        }
+        return value;
+    };
+    VirtualComponent.prototype.collectAllSubChildrenAndItself = function () {
         var arr = [this];
-        this.children.forEach(function (c) { return arr = arr.concat(c.getAllChildComponentsAndItself()); });
+        this.children.forEach(function (c) { return arr = arr.concat(c.collectAllSubChildrenAndItself()); });
         return arr;
     };
     VirtualComponent.prototype.validateRootElement = function (el) {
@@ -123,7 +140,8 @@ var VirtualComponent = (function () {
             discoveredComponentRoots_1.forEach(function creatingComponent(el) {
                 var id = this.generateUniqueId();
                 el.setAttribute(exports.ATTR_ID, id);
-                this.children.push(new VirtualComponent(el.cloneNode(true), this.componentAttr, new ReactyCodeGenerator_1["default"]()).setId(id));
+                var component = new VirtualComponent(el.cloneNode(true), this.componentAttr, new ReactyCodeGenerator_1["default"]()).setParent(this).setId(id);
+                this.children.push(component);
             }, this);
         }
         catch (e) {

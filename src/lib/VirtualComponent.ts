@@ -1,4 +1,4 @@
-import { CodeGeneratorInterface } from "./CodeGenerator";
+import { ComponentCodeGeneratorInterface } from './CodeGenerator';
 import ReactyCodeGenerator from "./ReactyCodeGenerator";
 
 class VirtualComponentParsingError extends Error {}
@@ -22,7 +22,10 @@ export interface VirtualComponentInterface {
   // children from parent (if there is one)
   getId(): string;
   getChildren(): VirtualComponentInterface[];
+  getParent(): VirtualComponentInterface | undefined;
   generateCode(): string;
+  collectAllSubChildrenAndItself(): VirtualComponentInterface[];
+  findAttributeValueThrouItselfAndParents(attr: string): string | undefined;
 }
 
 export default class VirtualComponent implements VirtualComponentInterface {
@@ -32,19 +35,20 @@ export default class VirtualComponent implements VirtualComponentInterface {
   // Root element
   private el: HTMLElement;
   // Innter components
-  private children: VirtualComponent[] = [];
+  private children: VirtualComponentInterface[] = [];
+  private parent: VirtualComponentInterface | undefined;
   // Attribute which defies whether dom node is component root or not. It's for finding
   // those nodes and creating components from them.
   private componentAttr: string;
   // Name of this component
   private name: string;
 
-  private codeGenerator: CodeGeneratorInterface; 
+  private codeGenerator: ComponentCodeGeneratorInterface; 
 
   constructor(
     el: HTMLElement,
     componentAttr: string,
-    codeGenerator: CodeGeneratorInterface = new ReactyCodeGenerator()
+    codeGenerator: ComponentCodeGeneratorInterface = new ReactyCodeGenerator()
   ) {
     if (!componentAttr) {
       throw new VirtualComponentInitializationError(
@@ -68,8 +72,18 @@ export default class VirtualComponent implements VirtualComponentInterface {
     this.parseRootHTMLElement();
   }
 
-  public setCodeGenerator(cg: CodeGeneratorInterface): VirtualComponent {
+  public setCodeGenerator(cg: ComponentCodeGeneratorInterface): VirtualComponent {
     this.codeGenerator = cg;
+
+    return this;
+  }
+
+  public getParent() {
+    return this.parent;
+  }
+
+  public setParent(p: VirtualComponentInterface): VirtualComponent {
+    this.parent = p;
 
     return this;
   }
@@ -90,7 +104,7 @@ export default class VirtualComponent implements VirtualComponentInterface {
     return this.children;
   }
 
-  public setId(id: string) {
+  public setId(id: string): VirtualComponent {
     this.id = id;
 
     return this;
@@ -104,10 +118,24 @@ export default class VirtualComponent implements VirtualComponentInterface {
     return this.codeGenerator.generate();
   }
 
-  public getAllChildComponentsAndItself(): VirtualComponent[] {
-    let arr: VirtualComponent[] = [this];
+  public findAttributeValueThrouItselfAndParents(attr: string): string | undefined {
+    const value = this.el.getAttribute(attr);
 
-    this.children.forEach(c => arr = arr.concat(c.getAllChildComponentsAndItself()));
+    if (!value) {
+      if (this.parent) {
+        return this.parent.findAttributeValueThrouItselfAndParents(attr);
+      }
+
+      return undefined;
+    }
+
+    return value;
+  }
+
+  public collectAllSubChildrenAndItself(): VirtualComponentInterface[] {
+    let arr: VirtualComponentInterface[] = [this];
+
+    this.children.forEach(c => arr = arr.concat(c.collectAllSubChildrenAndItself()));
 
     return arr;
   }
@@ -164,17 +192,17 @@ Html of this element (without children): ${(el.cloneNode() as HTMLElement).outer
 
       // Creating inner elements
       discoveredComponentRoots.forEach(function creatingComponent(el) {
-        const id = this.generateUniqueId();
+        const id = (this as VirtualComponent).generateUniqueId();
 
         el.setAttribute(ATTR_ID, id);
 
-        this.children.push(
-          new VirtualComponent(
-            el.cloneNode(true) as HTMLElement,
-            this.componentAttr,
-            new ReactyCodeGenerator()
-          ).setId(id)
-        );
+        const component = new VirtualComponent(
+          el.cloneNode(true) as HTMLElement,
+          this.componentAttr,
+          new ReactyCodeGenerator()
+        ).setParent(this).setId(id);
+
+        this.children.push(component);
       }, this);
     } catch (e) {
       console.error(e);

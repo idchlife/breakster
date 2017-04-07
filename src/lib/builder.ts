@@ -1,7 +1,9 @@
 import * as fs from "async-file";
 import * as jsdom from "jsdom";
-import Component, { Language } from "./parts/component";
-import VirtualComponent, { DEFAULT_COMPONENT_ATTR_NAME } from "./VirtualComponent";
+import VirtualComponent, {
+  DEFAULT_COMPONENT_ATTR_NAME,
+  VirtualComponentInterface
+} from './VirtualComponent';
 import { ReactyCodeGenerator } from "./CodeGenerator";
 
 
@@ -27,8 +29,6 @@ const FILE_EXTENSIONS = {
 class Builder {
   private inputFile: string;
   private outputFolder: string;
-  private tag: string = "comp";
-  private language: Language = "javascript";
   private debug: boolean = false;
 
   constructor(inputFile: string, outputFolder: string, debug = true) {
@@ -87,7 +87,7 @@ class Builder {
         DEFAULT_COMPONENT_ATTR_NAME
       );
 
-      const components: VirtualComponent[] = rootComponent.getAllChildComponentsAndItself();
+      const components: VirtualComponentInterface[] = rootComponent.collectAllSubChildrenAndItself();
 
       components.forEach(c => console.log(c.generateCode()));
     } catch (e) {

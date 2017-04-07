@@ -13,15 +13,34 @@ exports.__esModule = true;
 var VirtualComponent_1 = require("./VirtualComponent");
 var ReactyLibrary = (function () {
     function ReactyLibrary() {
+        // Default dialect is JavaScript
+        this.dialect = new JavaScript();
     }
     ReactyLibrary.prototype.getFactoryFunctionName = function () { return ""; };
     ReactyLibrary.prototype.getName = function () { return ""; };
     ReactyLibrary.prototype.getRenderArguments = function () { return ""; };
-    ReactyLibrary.prototype.getGenericAfterExtend = function () { return ""; };
+    ReactyLibrary.prototype.getGenericAfterExtend = function () {
+        if (this.dialect instanceof TypeScript) {
+            return "<Props, State>";
+        }
+        return "";
+    };
     ReactyLibrary.prototype.getBeforeRenderReturnCode = function () { return ""; };
     ReactyLibrary.prototype.getAdditionalImports = function () { return ""; };
     ReactyLibrary.prototype.getComponentProperties = function () { return ""; };
-    ReactyLibrary.prototype.provideDialect = function (d) { };
+    ReactyLibrary.prototype.getBeforComponentDeclarationCode = function () {
+        if (this.dialect instanceof TypeScript) {
+            return "\ninterface Props {}\ninterface State {}\n";
+        }
+        return "";
+    };
+    ;
+    ReactyLibrary.prototype.provideDialect = function (d) {
+        this.dialect = d;
+    };
+    ReactyLibrary.prototype.getDialect = function () {
+        return this.dialect;
+    };
     return ReactyLibrary;
 }());
 var PreactLibrary = (function (_super) {
@@ -39,9 +58,6 @@ var PreactLibrary = (function (_super) {
     };
     PreactLibrary.prototype.getRenderArguments = function () {
         return "props, state";
-    };
-    PreactLibrary.prototype.provideDialect = function (d) {
-        this.dialect = d;
     };
     return PreactLibrary;
 }(ReactyLibrary));
@@ -61,28 +77,38 @@ var ReactLibrary = (function (_super) {
 var Dialect = (function () {
     function Dialect() {
     }
+    Dialect.prototype.getFileExtension = function () {
+        return "js";
+    };
     Dialect.getAttrValue = function () {
         // This is default value
         return "";
     };
     return Dialect;
 }());
-var JavaScript = (function () {
+var JavaScript = (function (_super) {
+    __extends(JavaScript, _super);
     function JavaScript() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     JavaScript.getAttrValue = function () {
-        return "js";
+        return "javascript";
     };
     return JavaScript;
-}());
-var TypeScript = (function () {
+}(Dialect));
+var TypeScript = (function (_super) {
+    __extends(TypeScript, _super);
     function TypeScript() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    TypeScript.getAttrValue = function () {
+    TypeScript.prototype.getFileExtension = function () {
         return "ts";
     };
+    TypeScript.getAttrValue = function () {
+        return "typescript";
+    };
     return TypeScript;
-}());
+}(Dialect));
 var JSX_ATTR_LIB = {
     "preact": PreactLibrary,
     "react": ReactLibrary
@@ -117,8 +143,12 @@ var ReactyCodeGenerator = (function () {
     }
     ReactyCodeGenerator.prototype.attachComponent = function (c) {
         this.component = c;
+    };
+    ReactyCodeGenerator.prototype.processComponent = function () {
+        var c = this.component;
         var el = c.getEl();
-        var dialectAttrValue = el.getAttribute(VirtualComponent_1.ATTR_DIALECT);
+        var dialectAttrValue = c.findAttributeValueThrouItselfAndParents(VirtualComponent_1.ATTR_DIALECT);
+        // Trying to find dialect from parent components
         var dialect;
         if (dialectAttrValue) {
             if (!DIALECT_ATTR_LIB[dialectAttrValue]) {
@@ -145,6 +175,7 @@ var ReactyCodeGenerator = (function () {
         }
     };
     ReactyCodeGenerator.prototype.generate = function () {
+        this.processComponent();
         var component = this.component;
         if (!component) {
             throw new ComponentNotAttachedError();
@@ -176,7 +207,10 @@ var ReactyCodeGenerator = (function () {
             jsx = jsx.replace(r.search, r.replace);
         });
         var l = this.library;
-        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from " + this.library.getName() + ";" + additionalImports + "\n\nexport default class " + component.getName() + " extends Component" + (l.getGenericAfterExtend && l.getGenericAfterExtend()) + " {\n  render(" + l.getRenderArguments() + ") {\n    return (\n      " + jsx + "\n    );\n  }\n}\n";
+        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from " + this.library.getName() + ";" + additionalImports + "\n\n" + l.getBeforComponentDeclarationCode() + "\n\nexport default class " + component.getName() + " extends Component" + l.getGenericAfterExtend() + " {\n  render(" + l.getRenderArguments() + ") {\n    " + l.getBeforeRenderReturnCode() + "\n    return (\n      " + jsx + "\n    );\n  }\n}\n";
+    };
+    ReactyCodeGenerator.prototype.getFileExtension = function () {
+        return this.library.getDialect().getFileExtension();
     };
     ReactyCodeGenerator.prototype.createFakeReplacementTagName = function () {
         return String("component-" + Math.ceil(Math.random() * 100000));
