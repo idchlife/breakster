@@ -20,7 +20,9 @@ export class ComponentFileSaver implements FileSaverInterface {
     try {
       await fs.stat(originalDir);
 
-      if (!fs.exists(`${originalDir}/components`)) {
+      const folderExists = await fs.exists(`${originalDir}/components`);
+
+      if (!folderExists) {
         await fs.mkdir(`${originalDir}/components`);
       }
     } catch (e) {

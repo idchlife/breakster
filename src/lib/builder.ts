@@ -92,7 +92,11 @@ class Builder {
 
       const fileSaver = new ComponentFileSaver();
 
-      await components.forEach(async c => fileSaver.save(this.outputFolder, c.getCodeGenerator()));
+      for (let i = 0, size = components.length; i < size; i++) {
+        const c = components[i];
+
+        await await fileSaver.save(this.outputFolder, c.getCodeGenerator());
+      }
     } catch (e) {
       console.error(e);
 

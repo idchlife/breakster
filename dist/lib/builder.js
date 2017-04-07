@@ -85,8 +85,7 @@ var Builder = (function () {
     };
     Builder.prototype.build = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            var fileContents, window, document, rootComponentElement, codeGenerator, rootComponent, components, fileSaver_1, e_1;
+            var fileContents, window, document, rootComponentElement, codeGenerator, rootComponent, components, fileSaver, i, size, c, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.checkPrerequisites()];
@@ -119,21 +118,29 @@ var Builder = (function () {
                         codeGenerator = new CodeGenerator_1.ReactyCodeGenerator();
                         _a.label = 4;
                     case 4:
-                        _a.trys.push([4, 6, , 7]);
+                        _a.trys.push([4, 10, , 11]);
                         rootComponent = new VirtualComponent_1["default"](rootComponentElement, VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME);
                         components = rootComponent.collectAllSubChildrenAndItself();
-                        fileSaver_1 = new FileSaver_1.ComponentFileSaver();
-                        return [4 /*yield*/, components.forEach(function (c) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
-                                return [2 /*return*/, fileSaver_1.save(this.outputFolder, c.getCodeGenerator())];
-                            }); }); })];
+                        fileSaver = new FileSaver_1.ComponentFileSaver();
+                        i = 0, size = components.length;
+                        _a.label = 5;
                     case 5:
+                        if (!(i < size)) return [3 /*break*/, 9];
+                        c = components[i];
+                        return [4 /*yield*/, fileSaver.save(this.outputFolder, c.getCodeGenerator())];
+                    case 6: return [4 /*yield*/, _a.sent()];
+                    case 7:
                         _a.sent();
-                        return [3 /*break*/, 7];
-                    case 6:
+                        _a.label = 8;
+                    case 8:
+                        i++;
+                        return [3 /*break*/, 5];
+                    case 9: return [3 /*break*/, 11];
+                    case 10:
                         e_1 = _a.sent();
                         console.error(e_1);
                         throw new BuilderError("There was an error while build process was active. Above - more info on error.");
-                    case 7: return [2 /*return*/];
+                    case 11: return [2 /*return*/];
                 }
             });
         });

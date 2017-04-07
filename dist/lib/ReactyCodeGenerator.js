@@ -151,8 +151,6 @@ var ReactyCodeGenerator = (function () {
     }
     ReactyCodeGenerator.prototype.attachComponent = function (c) {
         this.component = c;
-        this.processComponent();
-        this.componentProcessed = true;
     };
     ReactyCodeGenerator.prototype.processComponent = function () {
         var c = this.component;
@@ -183,10 +181,11 @@ var ReactyCodeGenerator = (function () {
         if (this.library.provideDialect) {
             this.library.provideDialect(dialect);
         }
+        this.componentProcessed = true;
     };
     ReactyCodeGenerator.prototype.generate = function () {
         if (!this.componentProcessed) {
-            throw new ComponentWasNotYetParserError();
+            this.processComponent();
         }
         var component = this.component;
         if (!component) {
@@ -225,6 +224,9 @@ var ReactyCodeGenerator = (function () {
         return this.component;
     };
     ReactyCodeGenerator.prototype.getFileExtension = function () {
+        if (!this.componentProcessed) {
+            this.processComponent();
+        }
         return this.library.getDialect().getFileExtension();
     };
     ReactyCodeGenerator.prototype.createFakeReplacementTagName = function () {

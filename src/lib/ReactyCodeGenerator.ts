@@ -141,15 +141,10 @@ export default class ReactyCodeGenerator implements ComponentCodeGeneratorInterf
   // By default we use Preact library for jsx component generation
   private library: ReactyLibraryInterface;
   private component: VirtualComponentInterface;
-
   private componentProcessed: boolean = false;
 
   attachComponent(c: VirtualComponentInterface) {
     this.component = c;
-
-    this.processComponent();
-
-    this.componentProcessed = true;
   }
 
   private processComponent() {
@@ -194,11 +189,13 @@ Valid options are: ${Object.keys(JSX_ATTR_LIB)}`
     if (this.library.provideDialect) {
       this.library.provideDialect(dialect);
     }
+
+    this.componentProcessed = true;
   }
 
   public generate(): string {
     if (!this.componentProcessed) {
-      throw new ComponentWasNotYetParserError();
+      this.processComponent();
     }
 
     const component = this.component;
@@ -274,6 +271,10 @@ export default class ${component.getName()} extends Component${l.getGenericAfter
   }
 
   public getFileExtension(): string {
+    if (!this.componentProcessed) {
+      this.processComponent();
+    }
+
     return this.library.getDialect().getFileExtension();
   }
 
