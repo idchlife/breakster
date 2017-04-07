@@ -78,7 +78,7 @@ var Dialect = (function () {
     function Dialect() {
     }
     Dialect.prototype.getFileExtension = function () {
-        return "js";
+        return "jsx";
     };
     Dialect.getAttrValue = function () {
         // This is default value
@@ -102,7 +102,7 @@ var TypeScript = (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     TypeScript.prototype.getFileExtension = function () {
-        return "ts";
+        return "tsx";
     };
     TypeScript.getAttrValue = function () {
         return "typescript";
@@ -138,11 +138,21 @@ var ComponentNotAttachedError = (function (_super) {
     }
     return ComponentNotAttachedError;
 }(Error));
+var ComponentWasNotYetParserError = (function (_super) {
+    __extends(ComponentWasNotYetParserError, _super);
+    function ComponentWasNotYetParserError() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ComponentWasNotYetParserError;
+}(Error));
 var ReactyCodeGenerator = (function () {
     function ReactyCodeGenerator() {
+        this.componentProcessed = false;
     }
     ReactyCodeGenerator.prototype.attachComponent = function (c) {
         this.component = c;
+        this.processComponent();
+        this.componentProcessed = true;
     };
     ReactyCodeGenerator.prototype.processComponent = function () {
         var c = this.component;
@@ -175,7 +185,9 @@ var ReactyCodeGenerator = (function () {
         }
     };
     ReactyCodeGenerator.prototype.generate = function () {
-        this.processComponent();
+        if (!this.componentProcessed) {
+            throw new ComponentWasNotYetParserError();
+        }
         var component = this.component;
         if (!component) {
             throw new ComponentNotAttachedError();
@@ -207,7 +219,10 @@ var ReactyCodeGenerator = (function () {
             jsx = jsx.replace(r.search, r.replace);
         });
         var l = this.library;
-        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from " + this.library.getName() + ";" + additionalImports + "\n\n" + l.getBeforComponentDeclarationCode() + "\n\nexport default class " + component.getName() + " extends Component" + l.getGenericAfterExtend() + " {\n  render(" + l.getRenderArguments() + ") {\n    " + l.getBeforeRenderReturnCode() + "\n    return (\n      " + jsx + "\n    );\n  }\n}\n";
+        return "\nimport { " + this.library.getFactoryFunctionName() + ", Component } from \"" + this.library.getName() + "\";" + additionalImports + "\n\n" + l.getBeforComponentDeclarationCode() + "\n\nexport default class " + component.getName() + " extends Component" + l.getGenericAfterExtend() + " {\n  render(" + l.getRenderArguments() + ") {\n    " + l.getBeforeRenderReturnCode() + "\n    return (\n      " + jsx + "\n    );\n  }\n}\n";
+    };
+    ReactyCodeGenerator.prototype.getComponent = function () {
+        return this.component;
     };
     ReactyCodeGenerator.prototype.getFileExtension = function () {
         return this.library.getDialect().getFileExtension();

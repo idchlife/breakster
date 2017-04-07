@@ -88,8 +88,8 @@ var VirtualComponent = (function () {
     VirtualComponent.prototype.getId = function () {
         return this.id;
     };
-    VirtualComponent.prototype.generateCode = function () {
-        return this.codeGenerator.generate();
+    VirtualComponent.prototype.getCodeGenerator = function () {
+        return this.codeGenerator;
     };
     VirtualComponent.prototype.findAttributeValueThrouItselfAndParents = function (attr) {
         var value = this.el.getAttribute(attr);

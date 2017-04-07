@@ -1,3 +1,4 @@
+import { ComponentFileSaver } from './FileSaver';
 import * as fs from "async-file";
 import * as jsdom from "jsdom";
 import VirtualComponent, {
@@ -89,7 +90,9 @@ class Builder {
 
       const components: VirtualComponentInterface[] = rootComponent.collectAllSubChildrenAndItself();
 
-      components.forEach(c => console.log(c.generateCode()));
+      const fileSaver = new ComponentFileSaver();
+
+      await components.forEach(async c => fileSaver.save(this.outputFolder, c.getCodeGenerator()));
     } catch (e) {
       console.error(e);
 

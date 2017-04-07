@@ -5,8 +5,9 @@ interface FileSaverInterface {
 }
 
 class FolderCannotBeAccessedError extends Error {}
+class SavingToFileError extends Error {}
 
-export default class ComponentFileSaver implements FileSaverInterface {
+export class ComponentFileSaver implements FileSaverInterface {
   async save(dir: string, g: ComponentCodeGeneratorInterface) {
     let originalDir = dir;
 
@@ -17,7 +18,11 @@ export default class ComponentFileSaver implements FileSaverInterface {
     const saveToDir = `${originalDir}/components`;
 
     try {
-      await fs.stat(saveToDir);
+      await fs.stat(originalDir);
+
+      if (!fs.exists(`${originalDir}/components`)) {
+        await fs.mkdir(`${originalDir}/components`);
+      }
     } catch (e) {
       console.error(e);
 
@@ -26,6 +31,20 @@ export default class ComponentFileSaver implements FileSaverInterface {
       );
     }
 
+    const fileName = `${g.getComponent().getName()}.${g.getFileExtension()}`;
 
+    const filePath = `${saveToDir}/${fileName}`;
+
+    try {
+      await fs.writeFile(filePath, g.generate());
+
+      console.log(`Saved ${filePath}`);
+    } catch (e) {
+      console.error(e);
+
+      throw new SavingToFileError(
+        `Error saving to ${filePath}. More - above this error.`
+      );
+    }
   }
 }

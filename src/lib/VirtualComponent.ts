@@ -23,7 +23,7 @@ export interface VirtualComponentInterface {
   getId(): string;
   getChildren(): VirtualComponentInterface[];
   getParent(): VirtualComponentInterface | undefined;
-  generateCode(): string;
+  getCodeGenerator(): ComponentCodeGeneratorInterface;
   collectAllSubChildrenAndItself(): VirtualComponentInterface[];
   findAttributeValueThrouItselfAndParents(attr: string): string | undefined;
 }
@@ -114,8 +114,8 @@ export default class VirtualComponent implements VirtualComponentInterface {
     return this.id;
   }
 
-  public generateCode(): string {
-    return this.codeGenerator.generate();
+  public getCodeGenerator(): ComponentCodeGeneratorInterface {
+    return this.codeGenerator;
   }
 
   public findAttributeValueThrouItselfAndParents(attr: string): string | undefined {

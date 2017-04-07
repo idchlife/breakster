@@ -53,12 +53,19 @@ var FolderCannotBeAccessedError = (function (_super) {
     }
     return FolderCannotBeAccessedError;
 }(Error));
+var SavingToFileError = (function (_super) {
+    __extends(SavingToFileError, _super);
+    function SavingToFileError() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return SavingToFileError;
+}(Error));
 var ComponentFileSaver = (function () {
     function ComponentFileSaver() {
     }
     ComponentFileSaver.prototype.save = function (dir, g) {
         return __awaiter(this, void 0, void 0, function () {
-            var originalDir, saveToDir, e_1;
+            var originalDir, saveToDir, e_1, fileName, filePath, e_2;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -69,20 +76,40 @@ var ComponentFileSaver = (function () {
                         saveToDir = originalDir + "/components";
                         _a.label = 1;
                     case 1:
-                        _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, fs.stat(saveToDir)];
+                        _a.trys.push([1, 5, , 6]);
+                        return [4 /*yield*/, fs.stat(originalDir)];
                     case 2:
                         _a.sent();
-                        return [3 /*break*/, 4];
+                        if (!!fs.exists(originalDir + "/components")) return [3 /*break*/, 4];
+                        return [4 /*yield*/, fs.mkdir(originalDir + "/components")];
                     case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [3 /*break*/, 6];
+                    case 5:
                         e_1 = _a.sent();
                         console.error(e_1);
                         throw new FolderCannotBeAccessedError("Tried to access folder " + saveToDir + ", but apparently it doesn't exist or not accessible. More info: above");
-                    case 4: return [2 /*return*/];
+                    case 6:
+                        fileName = g.getComponent().getName() + "." + g.getFileExtension();
+                        filePath = saveToDir + "/" + fileName;
+                        _a.label = 7;
+                    case 7:
+                        _a.trys.push([7, 9, , 10]);
+                        return [4 /*yield*/, fs.writeFile(filePath, g.generate())];
+                    case 8:
+                        _a.sent();
+                        console.log("Saved " + filePath);
+                        return [3 /*break*/, 10];
+                    case 9:
+                        e_2 = _a.sent();
+                        console.error(e_2);
+                        throw new SavingToFileError("Error saving to " + filePath + ". More - above this error.");
+                    case 10: return [2 /*return*/];
                 }
             });
         });
     };
     return ComponentFileSaver;
 }());
-exports["default"] = ComponentFileSaver;
+exports.ComponentFileSaver = ComponentFileSaver;

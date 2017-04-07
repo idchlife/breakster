@@ -96,7 +96,7 @@ class ReactLibrary extends ReactyLibrary {
 
 abstract class Dialect {
   public getFileExtension(): string {
-    return "js";
+    return "jsx";
   }
   public static getAttrValue(): string {
     // This is default value
@@ -112,7 +112,7 @@ class JavaScript extends Dialect {
 
 class TypeScript extends Dialect {
   public getFileExtension(): string {
-    return "ts";
+    return "tsx";
   }
 
   public static getAttrValue(): string {
@@ -135,13 +135,21 @@ class InvalidOptionsError extends Error {}
 
 class ComponentNotAttachedError extends Error {}
 
+class ComponentWasNotYetParserError extends Error {}
+
 export default class ReactyCodeGenerator implements ComponentCodeGeneratorInterface {
   // By default we use Preact library for jsx component generation
   private library: ReactyLibraryInterface;
   private component: VirtualComponentInterface;
 
+  private componentProcessed: boolean = false;
+
   attachComponent(c: VirtualComponentInterface) {
     this.component = c;
+
+    this.processComponent();
+
+    this.componentProcessed = true;
   }
 
   private processComponent() {
@@ -189,7 +197,9 @@ Valid options are: ${Object.keys(JSX_ATTR_LIB)}`
   }
 
   public generate(): string {
-    this.processComponent();
+    if (!this.componentProcessed) {
+      throw new ComponentWasNotYetParserError();
+    }
 
     const component = this.component;
 
@@ -244,7 +254,7 @@ import ${c.getName()} from "./${c.getName()}"`;
     const l: ReactyLibraryInterface = this.library;
 
     return `
-import { ${this.library.getFactoryFunctionName()}, Component } from ${this.library.getName()};${additionalImports}
+import { ${this.library.getFactoryFunctionName()}, Component } from "${this.library.getName()}";${additionalImports}
 
 ${l.getBeforComponentDeclarationCode()}
 
@@ -259,7 +269,11 @@ export default class ${component.getName()} extends Component${l.getGenericAfter
 `;
   }
 
-  public getFileExtension() {
+  public getComponent(): VirtualComponentInterface {
+    return this.component;
+  }
+
+  public getFileExtension(): string {
     return this.library.getDialect().getFileExtension();
   }
 

@@ -45,6 +45,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
+var FileSaver_1 = require("./FileSaver");
 var fs = require("async-file");
 var jsdom = require("jsdom");
 var VirtualComponent_1 = require("./VirtualComponent");
@@ -84,7 +85,8 @@ var Builder = (function () {
     };
     Builder.prototype.build = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var fileContents, window, document, rootComponentElement, codeGenerator, rootComponent, components;
+            var _this = this;
+            var fileContents, window, document, rootComponentElement, codeGenerator, rootComponent, components, fileSaver_1, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.checkPrerequisites()];
@@ -115,23 +117,30 @@ var Builder = (function () {
                             throw new BuilderError("Could not find single element suited for component creation. Check your html.");
                         }
                         codeGenerator = new CodeGenerator_1.ReactyCodeGenerator();
-                        try {
-                            rootComponent = new VirtualComponent_1["default"](rootComponentElement, VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME);
-                            components = rootComponent.collectAllSubChildrenAndItself();
-                            components.forEach(function (c) { return console.log(c.generateCode()); });
-                        }
-                        catch (e) {
-                            console.error(e);
-                            throw new BuilderError("There was an error while build process was active. Above - more info on error.");
-                        }
-                        return [2 /*return*/];
+                        _a.label = 4;
+                    case 4:
+                        _a.trys.push([4, 6, , 7]);
+                        rootComponent = new VirtualComponent_1["default"](rootComponentElement, VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME);
+                        components = rootComponent.collectAllSubChildrenAndItself();
+                        fileSaver_1 = new FileSaver_1.ComponentFileSaver();
+                        return [4 /*yield*/, components.forEach(function (c) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                                return [2 /*return*/, fileSaver_1.save(this.outputFolder, c.getCodeGenerator())];
+                            }); }); })];
+                    case 5:
+                        _a.sent();
+                        return [3 /*break*/, 7];
+                    case 6:
+                        e_1 = _a.sent();
+                        console.error(e_1);
+                        throw new BuilderError("There was an error while build process was active. Above - more info on error.");
+                    case 7: return [2 /*return*/];
                 }
             });
         });
     };
     Builder.prototype.checkPrerequisites = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var e_1, e_2;
+            var e_2, e_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -141,7 +150,7 @@ var Builder = (function () {
                         _a.sent();
                         return [3 /*break*/, 3];
                     case 2:
-                        e_1 = _a.sent();
+                        e_2 = _a.sent();
                         throw new BuilderError("File " + this.inputFile + " does not exist or not available for read");
                     case 3:
                         _a.trys.push([3, 5, , 6]);
@@ -150,7 +159,7 @@ var Builder = (function () {
                         _a.sent();
                         return [3 /*break*/, 6];
                     case 5:
-                        e_2 = _a.sent();
+                        e_3 = _a.sent();
                         throw new BuilderError("Folder " + this.outputFolder + " is not available for writing or does not exist");
                     case 6: return [2 /*return*/, true];
                 }

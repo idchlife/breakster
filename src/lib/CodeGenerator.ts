@@ -7,6 +7,8 @@ export interface CodeGeneratorInterface {
 
 export interface ComponentCodeGeneratorInterface extends CodeGeneratorInterface {
   attachComponent(c: VirtualComponentInterface);
+  getComponent(): VirtualComponentInterface;
+  getFileExtension(): string;
 }
 
 function createCodeGenerator() {
