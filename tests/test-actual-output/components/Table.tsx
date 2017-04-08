@@ -11,7 +11,7 @@ export default class Table extends Component<Props, State> {
   render(props, state) {
     
     return (
-      <table b-comp="" b-name="Table" b-id="51201">
+      <table b-comp="" b-name="Table" b-id="16631">
           <thead>
             <tr>
               <td>Header first</td>

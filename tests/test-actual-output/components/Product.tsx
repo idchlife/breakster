@@ -11,7 +11,7 @@ export default class Product extends Component<Props, State> {
   render(props, state) {
     
     return (
-      <div b-comp="" b-name="Product" b-id="78870">
+      <div b-comp="" b-name="Product" b-id="62077">
           <div>Product name</div>
           <div>Product price</div>
           <div>Product count</div>
