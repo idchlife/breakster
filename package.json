@@ -7,6 +7,7 @@
     "build": "tsc -p \"./src\" -w",
     "test": "ava ./tests/test.js --verbose"
   },
+  "repository": "https://github.com/idchlife/breakster",
   "bin": "dist/index.js",
   "author": "idchlife",
   "license": "MIT",
