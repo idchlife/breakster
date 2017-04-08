@@ -7,9 +7,7 @@
     "build": "tsc -p \"./src\" -w",
     "test": "ava ./tests/test.js --verbose"
   },
-  "bin": {
-    "test-module-exec": "dist/index.js"
-  },
+  "bin": "dist/index.js",
   "author": "idchlife",
   "license": "MIT",
   "dependencies": {
