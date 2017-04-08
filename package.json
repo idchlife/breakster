@@ -1,6 +1,6 @@
 {
   "name": "breakster",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Tool that breaks your html into `reacty` (React, Preact) components, saving their code into files. Imports of children components, JSX with children components, etc - you're all set.",
   "main": "index.js",
   "scripts": {
