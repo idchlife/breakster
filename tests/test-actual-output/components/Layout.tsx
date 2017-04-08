@@ -13,7 +13,7 @@ export default class Layout extends Component<Props, State> {
   render(props, state) {
     
     return (
-      <div j-comp="" j-name="Layout" j-id="80538">
+      <div b-comp="" b-name="Layout" b-id="11466">
         <header>
           <div>User</div>
           <UserInfo />

@@ -6,11 +6,11 @@ class VirtualComponentInvalidElementError extends Error {};
 
 class VirtualComponentInitializationError extends Error {};
 
-const ATTR_NAME = "j-name";
-export const ATTR_ID = "j-id";
-export const DEFAULT_COMPONENT_ATTR_NAME = "j-comp";
-export const ATTR_DIALECT = "j-dialect";
-export const ATTR_JSX_LIB = "j-jsx-lib";
+const ATTR_NAME = "b-name";
+export const ATTR_ID = "b-id";
+export const DEFAULT_COMPONENT_ATTR_NAME = "b-comp";
+export const ATTR_DIALECT = "b-dialect";
+export const ATTR_JSX_LIB = "b-jsx-lib";
 
 export interface VirtualComponentInterface {
   // For getting element, it's attributes, children, etc

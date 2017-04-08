@@ -11,7 +11,7 @@ export default class IndexPage extends Component<Props, State> {
   render(props, state) {
     
     return (
-      <div j-comp="" j-dialect="typescript" j-name="IndexPage">
+      <div b-comp="" b-dialect="typescript" b-name="IndexPage">
       <Layout />
     </div>
     );

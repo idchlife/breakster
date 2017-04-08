@@ -1,14 +1,14 @@
 {
-  "name": "jsx-project-creator",
-  "version": "0.0.1",
-  "description": "",
+  "name": "breakster",
+  "version": "0.1.0",
+  "description": "Tool that breaks your html into `reacty` (React, Preact) components, saving their code into files. Imports of children components, JSX with children components, etc - you're all set.",
   "main": "index.js",
   "scripts": {
     "build": "tsc -p \"./src\" -w",
     "test": "ava ./tests/test.js --verbose"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "idchlife",
+  "license": "MIT",
   "dependencies": {
     "@types/jsdom": "^2.0.30",
     "@types/minimist": "^1.2.0",

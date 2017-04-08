@@ -34,11 +34,11 @@ var VirtualComponentInitializationError = (function (_super) {
     return VirtualComponentInitializationError;
 }(Error));
 ;
-var ATTR_NAME = "j-name";
-exports.ATTR_ID = "j-id";
-exports.DEFAULT_COMPONENT_ATTR_NAME = "j-comp";
-exports.ATTR_DIALECT = "j-dialect";
-exports.ATTR_JSX_LIB = "j-jsx-lib";
+var ATTR_NAME = "b-name";
+exports.ATTR_ID = "b-id";
+exports.DEFAULT_COMPONENT_ATTR_NAME = "b-comp";
+exports.ATTR_DIALECT = "b-dialect";
+exports.ATTR_JSX_LIB = "b-jsx-lib";
 var VirtualComponent = (function () {
     function VirtualComponent(el, componentAttr, codeGenerator) {
         if (codeGenerator === void 0) { codeGenerator = new ReactyCodeGenerator_1["default"](); }
