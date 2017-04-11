@@ -16,7 +16,7 @@ const STRIP_DEFAULT_ATTRIBUTES: string[] = [
   DEFAULT_COMPONENT_ATTR_NAME
 ];
 
-console.log('Debug: got from early import', STRIP_DEFAULT_ATTRIBUTES);
+//console.log('Debug: got from early import', STRIP_DEFAULT_ATTRIBUTES);
 
 interface ReactyLibraryInterface {
   getFactoryFunctionName(): string;

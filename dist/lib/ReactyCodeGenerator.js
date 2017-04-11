@@ -18,7 +18,6 @@ var STRIP_DEFAULT_ATTRIBUTES = [
     VirtualComponent_1.ATTR_JSX_LIB,
     VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME
 ];
-console.log('Debug: got from early import', STRIP_DEFAULT_ATTRIBUTES);
 var ReactyLibrary = (function () {
     function ReactyLibrary() {
         // Default dialect is JavaScript
