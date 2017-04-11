@@ -81,7 +81,7 @@ In the output folder you would see:
 
 And this is what inside of IndexPage.tsx file:
 
-![image](https://cloud.githubusercontent.com/assets/4563032/24829324/db314630-1c77-11e7-9030-f2bcb554e053.png)
+![image](https://cloud.githubusercontent.com/assets/4563032/24930721/3579403c-1f13-11e7-9948-447550141c7f.png)
 
 (the return of render method could not be that pretty (it's WIP), maybe you will need some tweeks with indentation)
 
