@@ -1,10 +1,22 @@
 import { CodeGeneratorInterface, ComponentCodeGeneratorInterface } from './CodeGenerator';
 import {
-  VirtualComponentInterface,
+  ATTR_DIALECT,
+  ATTR_ID,
+  ATTR_JSX_LIB,
+  ATTR_NAME,
+  DEFAULT_COMPONENT_ATTR_NAME,
+  VirtualComponentInterface
+} from './VirtualComponent';
+
+const STRIP_DEFAULT_ATTRIBUTES: string[] = [
+  ATTR_NAME,
   ATTR_ID,
   ATTR_DIALECT,
-  ATTR_JSX_LIB
-} from "./VirtualComponent";
+  ATTR_JSX_LIB,
+  DEFAULT_COMPONENT_ATTR_NAME
+];
+
+console.log('Debug: got from early import', STRIP_DEFAULT_ATTRIBUTES);
 
 interface ReactyLibraryInterface {
   getFactoryFunctionName(): string;
@@ -213,7 +225,7 @@ Valid options are: ${Object.keys(JSX_ATTR_LIB)}`
     // to <Component />
     const replacements: {search: string, replace: string}[] = [];
 
-    const el = component.getEl();
+    let el = component.getEl();
 
     component.getChildren().forEach(function gatheringImportAndReplacingElement(c) {
       additionalImports += `
@@ -241,6 +253,23 @@ import ${c.getName()} from "./${c.getName()}"`;
         replace: `<${c.getName()} />`
       });
     }, this);
+
+    // Before making changes to element we clone it, so other children/parent
+    // elements wont be affected by changed element
+    el = el.cloneNode(true) as HTMLElement;
+
+    const defaultAttrsToStrip: string[] = [
+      ATTR_NAME,
+      ATTR_ID,
+      ATTR_DIALECT,
+      ATTR_JSX_LIB,
+      DEFAULT_COMPONENT_ATTR_NAME
+    ];
+
+    // Stripping default attributes
+    defaultAttrsToStrip.forEach(attr => {
+      el.removeAttribute(attr);
+    });
 
     let jsx: string = el.outerHTML;
 

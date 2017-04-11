@@ -3,8 +3,6 @@ import VirtualComponent from "./lib/VirtualComponent";
 import * as minimist from "minimist";
 import * as path from "path";
 
-
-
 export {
   Builder,
   VirtualComponent

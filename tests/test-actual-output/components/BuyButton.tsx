@@ -11,7 +11,7 @@ export default class BuyButton extends Component<Props, State> {
   render() {
     
     return (
-      <div b-comp="" b-jsx-lib="react" b-name="BuyButton" b-id="91373">
+      <div>
             <button>buy</button>
             <div>
               <div>Buy as</div>

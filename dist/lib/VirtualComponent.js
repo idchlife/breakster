@@ -34,7 +34,7 @@ var VirtualComponentInitializationError = (function (_super) {
     return VirtualComponentInitializationError;
 }(Error));
 ;
-var ATTR_NAME = "b-name";
+exports.ATTR_NAME = "b-name";
 exports.ATTR_ID = "b-id";
 exports.DEFAULT_COMPONENT_ATTR_NAME = "b-comp";
 exports.ATTR_DIALECT = "b-dialect";
@@ -52,7 +52,7 @@ var VirtualComponent = (function () {
         }
         this.validateRootElement(el);
         this.el = el;
-        this.name = el.getAttribute(ATTR_NAME);
+        this.name = el.getAttribute(exports.ATTR_NAME);
         this.componentAttr = componentAttr;
         this.codeGenerator = codeGenerator;
         this.codeGenerator.attachComponent(this);
@@ -110,8 +110,8 @@ var VirtualComponent = (function () {
         if (!el) {
             throw new VirtualComponentInvalidElementError("Element does not appear to be valid. Type of this element: " + typeof el);
         }
-        if (!el.getAttribute(ATTR_NAME)) {
-            throw new VirtualComponentParsingError("Component does not have attr " + ATTR_NAME + " or attribute has empty value!\n\n" + ATTR_NAME + " value: " + el.getAttribute(ATTR_NAME) + "\n\nAttributes: " + el.attributes + "\n\nHtml of this element (without children): " + el.cloneNode().outerHTML + "\n");
+        if (!el.getAttribute(exports.ATTR_NAME)) {
+            throw new VirtualComponentParsingError("Component does not have attr " + exports.ATTR_NAME + " or attribute has empty value!\n\n" + exports.ATTR_NAME + " value: " + el.getAttribute(exports.ATTR_NAME) + "\n\nAttributes: " + el.attributes + "\n\nHtml of this element (without children): " + el.cloneNode().outerHTML + "\n");
         }
     };
     VirtualComponent.prototype.parseRootHTMLElement = function () {
@@ -125,7 +125,7 @@ var VirtualComponent = (function () {
                 // we will be working only with element nodes, not text/comment etc
                 arr.forEach(function parseChildNode(el) {
                     // If child itself is component root
-                    if (el.getAttribute(ATTR_NAME)) {
+                    if (el.getAttribute(exports.ATTR_NAME)) {
                         discoveredComponentRoots_1.push(el);
                         return;
                     }

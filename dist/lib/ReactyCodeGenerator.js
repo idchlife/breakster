@@ -11,6 +11,14 @@ var __extends = (this && this.__extends) || (function () {
 })();
 exports.__esModule = true;
 var VirtualComponent_1 = require("./VirtualComponent");
+var STRIP_DEFAULT_ATTRIBUTES = [
+    VirtualComponent_1.ATTR_NAME,
+    VirtualComponent_1.ATTR_ID,
+    VirtualComponent_1.ATTR_DIALECT,
+    VirtualComponent_1.ATTR_JSX_LIB,
+    VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME
+];
+console.log('Debug: got from early import', STRIP_DEFAULT_ATTRIBUTES);
 var ReactyLibrary = (function () {
     function ReactyLibrary() {
         // Default dialect is JavaScript
@@ -213,6 +221,20 @@ var ReactyCodeGenerator = (function () {
                 replace: "<" + c.getName() + " />"
             });
         }, this);
+        // Before making changes to element we clone it, so other children/parent
+        // elements wont be affected by changed element
+        el = el.cloneNode(true);
+        var defaultAttrsToStrip = [
+            VirtualComponent_1.ATTR_NAME,
+            VirtualComponent_1.ATTR_ID,
+            VirtualComponent_1.ATTR_DIALECT,
+            VirtualComponent_1.ATTR_JSX_LIB,
+            VirtualComponent_1.DEFAULT_COMPONENT_ATTR_NAME
+        ];
+        // Stripping default attributes
+        defaultAttrsToStrip.forEach(function (attr) {
+            el.removeAttribute(attr);
+        });
         var jsx = el.outerHTML;
         replacements.forEach(function (r) {
             jsx = jsx.replace(r.search, r.replace);

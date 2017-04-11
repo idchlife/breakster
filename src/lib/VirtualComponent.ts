@@ -6,7 +6,7 @@ class VirtualComponentInvalidElementError extends Error {};
 
 class VirtualComponentInitializationError extends Error {};
 
-const ATTR_NAME = "b-name";
+export const ATTR_NAME = "b-name";
 export const ATTR_ID = "b-id";
 export const DEFAULT_COMPONENT_ATTR_NAME = "b-comp";
 export const ATTR_DIALECT = "b-dialect";
