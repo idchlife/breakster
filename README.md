@@ -1,5 +1,7 @@
 # Breakster
 
+[![Build Status](https://travis-ci.org/idchlife/breakster.svg?branch=master)](https://travis-ci.org/idchlife/breakster)
+
 Tool that breaks your html into "reacty" (React, Preact) components, saving their
 code into files. Imports of children components, JSX with children components,
 etc - you're all set.
